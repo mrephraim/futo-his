@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: folderHead(title = 'Primary Details')">
+
+</head>
+<body>
+
+<div th:insert="fragments :: sidebar"></div>
+<div class="content">
+    <div class="container">
+        <!-- Accordion for Patient Details -->
+        <div class="accordion accordion-flush" id="patientAccordion">
+            <!-- Patient Information -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPatient">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePatient" aria-expanded="false" aria-controls="collapsePatient">
+                        Basic Info & Contact Details
+                    </button>
+                </h2>
+                <div id="collapsePatient" class="accordion-collapse collapse" aria-labelledby="headingPatient" data-bs-parent="#patientAccordion">
+                    <div class="accordion-body">
+                        <!-- Patient Information Table -->
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <th>Registration Number</th>
+                                <td th:text="${patientData.patient.regNo}"></td>
+                            </tr>
+                            <tr>
+                                <th>Surname</th>
+                                <td th:text="${patientData.patient.surName}"></td>
+                            </tr>
+                            <tr>
+                                <th>First Name</th>
+                                <td th:text="${patientData.patient.firstName}"></td>
+                            </tr>
+                            <tr>
+                                <th>Middle Name</th>
+                                <td th:text="${patientData.patient.middleName}"></td>
+                            </tr>
+                            <tr>
+                                <th>School</th>
+                                <td th:text="${patientData.patient.school}"></td>
+                            </tr>
+                            <tr>
+                                <th>Department</th>
+                                <td th:text="${patientData.patient.department}"></td>
+                            </tr>
+                            <tr>
+                                <th>Phone Number</th>
+                                <td th:text="${patientData.patient.phoneNo}"></td>
+                            </tr>
+                            <tr>
+                                <th>Date of Birth</th>
+                                <td th:text="${patientData.patient.dob}"></td>
+                            </tr>
+                            <tr>
+                                <th>Sex</th>
+                                <td th:text="${patientData.patient.sex}"></td>
+                            </tr>
+                            <tr>
+                                <th>Marital Status</th>
+                                <td th:text="${patientData.patient.maritalStatus}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kin Information -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingKin">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKin" aria-expanded="false" aria-controls="collapseKin">
+                        Kin Information
+                    </button>
+                </h2>
+                <div id="collapseKin" class="accordion-collapse collapse" aria-labelledby="headingKin" data-bs-parent="#patientAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <th>Kin's Name</th>
+                                <td th:text="${patientData.kin.name}"></td>
+                            </tr>
+                            <tr>
+                                <th>Phone Number</th>
+                                <td th:text="${patientData.kin.phoneNo}"></td>
+                            </tr>
+                            <tr>
+                                <th>Residential Address</th>
+                                <td th:text="${patientData.kin.residentialAddress}"></td>
+                            </tr>
+                            <tr>
+                                <th>Occupation</th>
+                                <td th:text="${patientData.kin.occupation}"></td>
+                            </tr>
+                            <tr>
+                                <th>Relation to Patient</th>
+                                <td th:text="${patientData.kin.relationToStudent}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guardian Information -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingGuardian">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuardian" aria-expanded="false" aria-controls="collapseGuardian">
+                        Guardian Information
+                    </button>
+                </h2>
+                <div id="collapseGuardian" class="accordion-collapse collapse" aria-labelledby="headingGuardian" data-bs-parent="#patientAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <th>Guardian's Name</th>
+                                <td th:text="${patientData.guardian.name}"></td>
+                            </tr>
+                            <tr>
+                                <th>Phone Number</th>
+                                <td th:text="${patientData.guardian.phoneNo}"></td>
+                            </tr>
+                            <tr>
+                                <th>Office Address</th>
+                                <td th:text="${patientData.guardian.officeAddress}"></td>
+                            </tr>
+                            <tr>
+                                <th>Residential Address</th>
+                                <td th:text="${patientData.guardian.residentialAddress}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingMedicalHistory">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMedicalHistory" aria-expanded="false" aria-controls="collapseMedicalHistory">
+                        Medical History Information
+                    </button>
+                </h2>
+                <div id="collapseMedicalHistory" class="accordion-collapse collapse" aria-labelledby="headingMedicalHistory" data-bs-parent="#patientAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Details</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Previous Illness/ Surgery History</td>
+                                <td th:text="${patientData.medicalHistory.previousIllness}"></td>
+                            </tr>
+                            <tr>
+                                <td>Family History</td>
+                                <td th:text="${patientData.medicalHistory.familyHistory}"></td>
+                            </tr>
+                            <tr>
+                                <td>Height</td>
+                                <td th:text="${patientData.medicalHistory.height}"></td>
+                            </tr>
+                            <tr>
+                                <td>Weight</td>
+                                <td th:text="${patientData.medicalHistory.weight}"></td>
+                            </tr>
+                            <tr>
+                                <td>Visual Acuity</td>
+                                <td th:text="${patientData.medicalHistory.visualAcuity}"></td>
+                            </tr>
+                            <tr>
+                                <td>Cardiovascular Health</td>
+                                <td th:text="${patientData.medicalHistory.cardiovascularHealth}"></td>
+                            </tr>
+                            <tr>
+                                <td>Hearing Condition</td>
+                                <td th:text="${patientData.medicalHistory.hearingCondition}"></td>
+                            </tr>
+                            <tr>
+                                <td>Abdominal Health</td>
+                                <td th:text="${patientData.medicalHistory.abdominalHealth}"></td>
+                            </tr>
+                            <tr>
+                                <td>Respiratory Health</td>
+                                <td th:text="${patientData.medicalHistory.respiratoryHealth}"></td>
+                            </tr>
+                            <tr>
+                                <td>Extremities</td>
+                                <td th:text="${patientData.medicalHistory.extremities}"></td>
+                            </tr>
+                            <tr>
+                                <td>Psychiatric State</td>
+                                <td th:text="${patientData.medicalHistory.psychiatricState}"></td>
+                            </tr>
+                            <tr>
+                                <td>Genotype</td>
+                                <td th:text="${patientData.medicalHistory.genotype}"></td>
+                            </tr>
+                            <tr>
+                                <td>Blood Group</td>
+                                <td th:text="${patientData.medicalHistory.bloodGroup}"></td>
+                            </tr>
+                            <tr>
+                                <td>Chest X-ray</td>
+                                <td th:text="${patientData.medicalHistory.chestXray}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div th:insert="fragments :: folderFooter"></div>
+</body>
+</html>

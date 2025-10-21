@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title='PIS Drug Batches - Add New Batch')"></head>
+<style>
+  .spinner-border {
+      vertical-align: middle;
+      margin-left: 0.5rem; /* Space between text and loader */
+  }
+</style>
+<body>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-5" th:insert="fragments :: headerOne(title='Welcome to PIS Admin Portal')"></div>
+
+      <div class="row align-items-center mb-5 mt-2">
+        <h2 class="my-4 text-center">Add New Measurement Unit/ Dosage Form</h2>
+
+        <div class="card shadow-sm p-4 mb-4">
+          <h4 class="mb-3">Add Unit</h4>
+          <form id="unitForm">
+            <div class="mb-3">
+              <label class="form-label">Unit Name</label>
+              <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Base Unit (optional)</label>
+              <select class="form-select" name="baseUnitId" id="unitBaseSelect"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Conversion Factor</label>
+              <input type="text" class="form-control" name="factor" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-control" name="category" required>
+            </div>
+            <div id="unitFeedback" class="mt-3"></div>
+            <button type="submit" class="btn btn-primary" id="submitBtnUnit">
+              <span id="buttonTextUnit">Submit</span>
+              <span id="buttonLoaderUnit" class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </form>
+        </div>
+
+        <div class="card shadow-sm p-4 mb-4">
+          <h4 class="mb-3">Add Dosage Form</h4>
+          <form id="dosageFormForm">
+            <div class="mb-3">
+              <label for="dosageFormName" class="form-label">Dosage Form</label>
+              <input type="text" class="form-control" id="dosageFormName" name="name" required>
+            </div>
+            <div class="mb-3">
+              <label for="dosageFormExample" class="form-label">Example</label>
+              <input type="text" class="form-control" id="dosageFormExample" name="example">
+            </div>
+            <div id="dosageFormFeedback" class="mt-3"></div>
+            <button type="submit" class="btn btn-primary" id="submitBtnDosage">
+              <span id="buttonTextDosage">Submit</span>
+              <span id="buttonLoaderDosage" class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Load existing units into dropdown
+  async function loadUnits() {
+      const res = await fetch('/pis/units');
+      const units = await res.json();  // this will be an array
+      const select = document.getElementById('unitBaseSelect');
+      select.innerHTML = '<option value="">-- None --</option>';
+      units.forEach(u => {
+          select.innerHTML += `<option value="${u.id}">${u.name} (${u.category})</option>`;
+      });
+  }
+
+  loadUnits();
+
+  document.getElementById('unitForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submitBtnUnit');
+    const buttonText = document.getElementById('buttonTextUnit');
+    const buttonLoader = document.getElementById('buttonLoaderUnit');
+
+    // Show loader
+    buttonText.classList.add('d-none');
+    buttonLoader.classList.remove('d-none');
+    submitBtn.disabled = true;
+
+    try {
+        const formData = new FormData(this);
+        const data = {
+            name: formData.get('name'),
+            baseUnitId: formData.get('baseUnitId') || null,
+            factor: formData.get('factor'),
+            category: formData.get('category')
+        };
+
+        const response = await fetch('/pis/units', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        const feedback = document.getElementById('unitFeedback');
+
+        if (result.success) {
+            feedback.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            this.reset();
+            loadUnits(); // reload dropdown
+        } else {
+            feedback.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('unitFeedback').innerHTML =
+            `<div class="alert alert-danger">Failed to submit. Please try again.</div>`;
+    } finally {
+        // Restore button
+        buttonText.classList.remove('d-none');
+        buttonLoader.classList.add('d-none');
+        submitBtn.disabled = false;
+    }
+});
+
+</script>
+
+<script>
+  document.getElementById('dosageFormForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtnDosage');
+      const txt = document.getElementById('buttonTextDosage');
+      const loader = document.getElementById('buttonLoaderDosage');
+      txt.classList.add('d-none'); loader.classList.remove('d-none'); btn.disabled = true;
+
+      try {
+          const formData = new FormData(this);
+          const response = await fetch('/pis/dosage-forms', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  name: formData.get('name'),
+                  example: formData.get('example')
+              })
+          });
+          const result = await response.json();
+
+          document.getElementById('dosageFormFeedback').innerHTML =
+              result.success
+                  ? `<div class="alert alert-success">${result.message}</div>`
+                  : `<div class="alert alert-danger">${result.message}</div>`;
+
+          if (result.success) this.reset();
+      } catch {
+          document.getElementById('dosageFormFeedback').innerHTML =
+              `<div class="alert alert-danger">Failed to submit. Try again.</div>`;
+      } finally {
+          txt.classList.remove('d-none');
+          loader.classList.add('d-none');
+          btn.disabled = false;
+      }
+  });
+</script>
+
+
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

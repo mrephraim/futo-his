@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:insert="fragments :: head(title = 'DASHBOARD - PIS Admin Portal - FUTO HIS')"></head>
+<style>
+    /* Optional: Add styling to visually disable the link */
+    .disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+    /* Hover effect for the card */
+.hover-card {
+    transition: background-color 0.3s ease;
+}
+
+.hover-card:hover {
+    background-color: #e9ecef;
+}
+
+/* Hover effect for the pill button */
+.hover-pill {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hover-pill:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+#page-content {
+        display: none; /* Hide content until data is fetched */
+    }
+     .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+
+
+</style>
+<body>
+<div class="container" id="page-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='Welcome to PIS Admin Portal')"></div>
+            <div class="row align-items-center mb-5 mt-2">
+                <!-- Admin Info Card -->
+                <div class="col-md-4 mb-3">
+                    <div class="card" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle" style="font-size: 2rem; margin-right: 10px;"></i>
+                            <div>
+                                <h6 class="mb-0" th:text="${userName}"></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Input Group for Sample/Request Search -->
+                <div class="col-md-8 mb-3">
+                    <div class="input-group" style="width:100%;">
+                        <input type="text" id="sampleRequestID" class="form-control form-control-lg" aria-label="Text input with dropdown button" placeholder="">
+                        <button class="btn btn-lg btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="processSampleLink">Process Order</a></li>
+                            <li><a class="dropdown-item" href="#" id="viewRequisitionLink">View Order</a></li>
+                            <li><a class="dropdown-item" href="#" id="viewResultLink">View Result</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Main Cards Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <a href="/pis/prescriptions" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card" >
+                            <div class="card-body">
+                                <h5 class="card-title mb-4" style="font-size: 1.25rem;">Notifications</h5>
+                                <div class="rounded-pill mb-2 bg-light d-flex align-items-center justify-content-between px-3 py-2 shadow-sm hover-pill" style="font-size: 1rem; width: 100%;">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-bell-fill" style="font-size: 1.25rem; color: #28a745; margin-right: 0.5rem;"></i>
+                                        <span style="color: black; font-weight: 500;">Prescription Orders</span>
+                                    </div>
+                                    <span class="badge bg-danger text-white rounded-pill ms-3"
+                                          style="font-size: 0.875rem; padding: 0.4rem 0.8rem;">
+                                        <span id="pending-orders"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        </a>
+                    </div>
+
+
+                    <!-- Add New Patient Card -->
+                <div class="col-md-6 mb-3">
+                    <a  class="btn text-decoration-none" style="color:black; width: 100%;" data-bs-toggle="modal" data-bs-target="#prescriptionModal">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    New Prescription
+                                </h5>
+                                <i class="bi bi-prescription2" style="font-size: 3rem; color: #28a745;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+                <!-- Total Patients Card -->
+                <div class="col-md-6 mb-3">
+                    <a href="/pis/prescriptions?status=ONGOING" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ongoing Prescriptions</h5>
+                                <p class="card-text display-4" id="ongoing-prescriptions"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Create New EMR User Card -->
+                <div class="col-md-6 mb-3 onlyAdmin">
+                    <a href="/pis/new-user" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Create New PIS User</h5>
+                                <i class="bi bi-person-plus" style="font-size: 3rem; color: #007bff;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- View Lab Setup Card -->
+                <div class="col-md-6 mb-3 onlyAdmin">
+                    <a class="text-decoration-none" style="color:gray;">
+                        <div class="card text-center shadow p-4">
+                            <div class="card-body">
+                                <h5 class="card-title">PIS Server <br/><small>(Login in to host server to access)</smaLl></h5>
+                                <i class="bi bi-gear" style="font-size: 2rem; color: gray;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                    <!-- Biohazard/Biosafety Card -->
+                    <div class="col-md-6 mb-3">
+                        <a href="/pis/inventory" class="text-decoration-none">
+                            <div class="card text-center shadow p-4 hover-card" style="color:black;">
+                                <div class="card-body">
+                                    <h5 class="card-title" style=" font-weight: 500;">Stock Inventory</h5>
+                                    <i class="bi bi-shop-window" style="font-size: 3rem; color: #000000;"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+
+            <!-- Lab Setup Section -->
+            <div class="mb-3 onlyAdmin">
+                <h3 class="text-center">PIS Master Setup</h3>
+            </div>
+            <div class="row mb-4 onlyAdmin">
+                <div class="col-md-3 mb-3">
+                    <a href="/pis/new-drug" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Drugs</h6>
+                                <i class="bi bi-capsule" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Category Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="pis/new-category" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Category/Generic</h6>
+                                <i class="bi bi-box" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+
+                <!-- Parameters Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="/pis/new-unit" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Units/Forms</h6>
+                                <i class="bi bi-list-task" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Lab Test Card -->
+
+
+                <!-- Sample Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="/pis/new-batch" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Batch</h6>
+                                <i class="bi bi-basket3" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="row justify-content-end mt-4">
+                <div class="col-md-3">
+                    <button class="btn btn-danger btn-md" style="width: 100%;" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class="bi bi-box-arrow-right" style="font-size: 1.5rem;"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Logout Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="bi bi-box-arrow-right" style="font-size: 3rem; color: #dc3545;"></i>
+                    <p>Are you sure you want to log out?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="/pis/logout" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Bootstrap 5 Modal -->
+    <div class="modal fade" id="prescriptionModal" tabindex="-1" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prescriptionModalLabel">Create New Prescription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Patient Info -->
+                    <div class="mb-3">
+                        <label class="form-label">Patient Information</label>
+                        <input type="text" id="patientInfo" class="form-control" placeholder="Enter registration number and hit enter">
+                    </div>
+
+                    <!-- Loader -->
+                    <div id="patientLoader" class="text-center mb-3 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- Patient Details -->
+                    <div id="patientDetails"
+                         class="border rounded p-3 mb-3 d-none position-relative"
+                         style="max-height: 50vh; overflow-y: auto;">
+
+                        <!-- Remove button -->
+                        <button type="button" id="removePatientBtn"
+                                class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+
+                        <h6 class="mb-3">Patient Details</h6>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Name:</strong> <span id="pdName"></span></p>
+                                <p><strong>DOB:</strong> <span id="pdDob"></span></p>
+                                <p><strong>Sex:</strong> <span id="pdSex"></span></p>
+                                <p><strong>School:</strong> <span id="pdSchool"></span></p>
+                                <p><strong>Department:</strong> <span id="pdDepartment"></span></p>
+                                <p><strong>Phone:</strong> <span id="pdPhone"></span></p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Email:</strong> <span id="pdEmail"></span></p>
+                                <p><strong>Weight:</strong> <span id="pdWeight"></span></p>
+                                <p><strong>Height:</strong> <span id="pdHeight"></span></p>
+                                <p><strong>Blood Group:</strong> <span id="pdBloodGroup"></span></p>
+                                <p><strong>Genotype:</strong> <span id="pdGenotype"></span></p>
+                                <p><strong>Allergies:</strong> <span id="pdAllergies"></span></p>
+                                <p><strong>Previous Illness:</strong> <span id="pdIllness"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Error -->
+                    <div id="patientError" class="alert alert-danger d-none"></div>
+
+                    <!-- Hidden input for prescriberId -->
+                    <input type="hidden" id="prescriberId" th:value="${userId}">
+
+                    <!-- Medications Section -->
+                    <h6 class="mb-3">Medications</h6>
+                    <div id="medicationsContainer">
+                        <div class="medication-row border rounded p-3 mb-3 position-relative">
+                            <!-- Remove button -->
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-medication-btn">
+                                <i class="bi bi-trash"></i>
+                            </button>
+
+                            <div class="row g-3">
+                                <!-- Drug Dropdown -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Drug</label>
+                                    <select class="form-select drug-select">
+                                        <option value="">-- Select Drug --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Dosage -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Dosage</label>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <input type="number" class="form-control dosage-value" placeholder="e.g., 1">
+                                        </div>
+                                        <div class="col-8">
+                                            <select class="form-select dosage-unit">
+                                                <option value="">-- Select Unit --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <select class="form-select frequency">
+                                                <option value="1">Once daily</option>
+                                                <option value="2">Twice daily</option>
+                                                <option value="4">Every 6 hours</option>
+                                                <option value="3">Every 8 hours</option>
+                                                <option value="2">Every 12 hours</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Duration -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Duration</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control duration-value" placeholder="e.g., 10">
+                                        <select class="form-select duration-unit">
+                                            <option value="1">Days</option>
+                                            <option value="7">Weeks</option>
+                                            <option value="30">Months</option>
+                                            <option value="365">Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Instructions -->
+                                <div class="col-md-12">
+                                    <label class="form-label">Instructions</label>
+                                    <textarea class="form-control instructions" placeholder="Enter additional instructions"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Medication Button -->
+                    <button type="button" class="btn btn-outline-primary" id="addMedicationBtn">
+                        + Add Medication
+                    </button>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="createPrescriptionBtn">Create Prescription</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div th:insert="fragments :: footer"></div>
+</div>
+<script>
+    // Function to attach remove event
+    function attachRemoveHandlers() {
+        document.querySelectorAll('.remove-medication-btn').forEach(btn => {
+            btn.onclick = function () {
+                const row = btn.closest('.medication-row');
+                if (document.querySelectorAll('.medication-row').length > 1) {
+                    row.remove();
+                } else {
+                    alert("At least one medication must be included.");
+                }
+            };
+        });
+    }
+
+    // JS: Add Medication
+    document.getElementById('addMedicationBtn').addEventListener('click', function () {
+        const container = document.getElementById('medicationsContainer');
+        const firstRow = container.querySelector('.medication-row');
+        const newRow = firstRow.cloneNode(true);
+
+        // Clear values in cloned inputs
+        newRow.querySelectorAll('input').forEach(input => input.value = '');
+        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+
+        container.appendChild(newRow);
+        attachRemoveHandlers();
+    });
+
+    // Attach remove handlers initially
+    attachRemoveHandlers();
+</script>
+<script>
+    window.onload = async function () {
+        try {
+            // Fetch user type
+            let userResponse = await fetch('/pis/user-type');
+            let userData = await userResponse.json();
+
+            if (userData.type === "lab_attendant") {
+                document.querySelectorAll('.onlyAdmin').forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+
+            // Show page content after data is fetched
+            document.getElementById('page-content').style.display = 'block';
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            document.getElementById('page-content').style.display = 'block'; // Show content even if error occurs
+        }
+    };
+</script>
+
+<script>
+    async function loadPrescriptionCounts() {
+        try {
+            // Fetch ongoing prescriptions count
+            const ongoingRes = await fetch("/pis/prescriptions/count/ongoing");
+            if (ongoingRes.ok) {
+                const ongoingData = await ongoingRes.json();
+                document.getElementById("ongoing-prescriptions").textContent = ongoingData.ongoingCount;
+            } else {
+                document.getElementById("ongoing-prescriptions").textContent = "0";
+            }
+
+            // Fetch prescribed (pending orders) count
+            const prescribedRes = await fetch("/pis/prescriptions/count/prescribed");
+            if (prescribedRes.ok) {
+                const prescribedData = await prescribedRes.json();
+                document.getElementById("pending-orders").textContent = prescribedData.prescribedCount;
+            } else {
+                document.getElementById("pending-orders").textContent = "0";
+            }
+        } catch (error) {
+            console.error("Error fetching prescription counts:", error);
+            document.getElementById("ongoing-prescriptions").textContent = "0";
+            document.getElementById("pending-orders").textContent = "0";
+        }
+    }
+
+    // Call on page load
+    document.addEventListener("DOMContentLoaded", loadPrescriptionCounts);
+</script>
+
+
+<script src="/static/add-prescription.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'LIS Admin Portal - FUTO HIS')"></head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div th:insert="fragments :: headerOne(title = 'LOGIN TO LIS ADMIN PORTAL')"></div>
+            <div class="login-container">
+                <div class="mb-3" th:if="${errorMessage}" style="color: red;">
+                    <p th:text="${errorMessage}"></p>
+                </div>
+                <form action="/lis/login" method="post">
+                    <div class="mb-3">
+                        <label for="adminUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" id="adminUsername" placeholder="Enter your username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" id="adminPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Login</button>
+                </form>
+            </div>
+            <div class="d-flex justify-content-end mt-3 mb-3">
+                <a href="/" class="btn btn-secondary me-3">Go Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:insert="fragments :: head(title = 'DASHBOARD - LIS Admin Portal - FUTO HIS')"></head>
+<style>
+    /* Optional: Add styling to visually disable the link */
+    .disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+    /* Hover effect for the card */
+.hover-card {
+    transition: background-color 0.3s ease;
+}
+
+.hover-card:hover {
+    background-color: #e9ecef;
+}
+
+/* Hover effect for the pill button */
+.hover-pill {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hover-pill:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+#page-content {
+        display: none; /* Hide content until data is fetched */
+    }
+
+</style>
+<body>
+<div class="container" id="page-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='Welcome to LIS Admin Portal')"></div>
+            <div class="row align-items-center mb-5 mt-2">
+                <!-- Admin Info Card -->
+                <div class="col-md-4 mb-3">
+                    <div class="card" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle" style="font-size: 2rem; margin-right: 10px;"></i>
+                            <div>
+                                <h6 class="mb-0" th:text="${userName}"></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Input Group for Sample/Request Search -->
+                <div class="col-md-8 mb-3">
+                    <div class="input-group" style="width:100%;">
+                        <input type="text" id="sampleRequestID" class="form-control form-control-lg" aria-label="Text input with dropdown button" placeholder="Enter sample/request ID">
+                        <button class="btn btn-lg btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="processSampleLink">Process Requisition</a></li>
+                            <li><a class="dropdown-item" href="#" id="viewRequisitionLink">View Requisition</a></li>
+                            <li><a class="dropdown-item" href="#" id="viewResultLink">View Result</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Main Cards Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <a href="/lis/view-orders" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card" >
+                            <div class="card-body">
+                                <h5 class="card-title mb-4" style="font-size: 1.25rem;">Notifications</h5>
+                                <div class="rounded-pill mb-2 bg-light d-flex align-items-center justify-content-between px-3 py-2 shadow-sm hover-pill" style="font-size: 1rem; width: 100%;">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-bell-fill" style="font-size: 1.25rem; color: #28a745; margin-right: 0.5rem;"></i>
+                                        <span style="color: black; font-weight: 500;">Lab Orders</span>
+                                    </div>
+                                    <span class="badge bg-danger text-white rounded-pill ms-3"  style="font-size: 0.875rem; padding: 0.4rem 0.8rem;"><span id="pending-orders"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                        </a>
+                    </div>
+
+
+                    <!-- Add New Patient Card -->
+                <div class="col-md-6 mb-3">
+                    <a href="/lis/new-requisition" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    Log Requisition
+                                </h5>
+                                <i class="bi bi-plus-circle" style="font-size: 3rem; color: #28a745;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+                <!-- Total Patients Card -->
+                <div class="col-md-6 mb-3">
+                    <a href="/lis/pending-results" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending</h5>
+                                <p class="card-text display-4" id="pending-requisitions"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Create New EMR User Card -->
+                <div class="col-md-6 mb-3 onlyAdmin">
+                    <a href="/lis/new-user" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4 hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Create New LIS User</h5>
+                                <i class="bi bi-person-plus" style="font-size: 3rem; color: #007bff;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- View Lab Setup Card -->
+                <div class="col-md-6 mb-3 onlyAdmin">
+                    <a class="text-decoration-none" style="color:gray;">
+                        <div class="card text-center shadow p-4">
+                            <div class="card-body">
+                                <h5 class="card-title">LIS Setup <br/><small>(Login in to host server to access)</smaLl></h5>
+                                <i class="bi bi-gear" style="font-size: 2rem; color: gray;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                    <!-- Biohazard/Biosafety Card -->
+                    <div class="col-md-6 mb-3">
+                        <a href="/lis/biohazards/add-report" class="text-decoration-none">
+                            <div class="card text-center shadow p-4 hover-card" style="color:black;">
+                                <div class="card-body">
+                                    <h5 class="card-title" style=" font-weight: 500;">Log Biohazard Incident</h5>
+                                    <img src="/static/img/biohazard-sign.png" class="img-fluid mt-2" width="64">
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+
+            <!-- Lab Setup Section -->
+            <div class="mb-3 onlyAdmin">
+                <h3 class="text-center">Lab Setup</h3>
+            </div>
+            <div class="row mb-4 onlyAdmin">
+                <div class="col-md-3 mb-3">
+                    <a href="/lis/new-test" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Lab Test</h6>
+                                <span class="material-symbols-outlined" style="font-size: 2.7rem; color: #6c757d;"> experiment </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <!-- Category Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="lis/new-category" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Category</h6>
+                                <i class="bi bi-box" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+
+                <!-- Parameters Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="/lis/new-parameter" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Parameters</h6>
+                                <i class="bi bi-list-task" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Lab Test Card -->
+
+
+                <!-- Sample Card -->
+                <div class="col-md-3 mb-3">
+                    <a href="/lis/new-sample-type" class="text-decoration-none">
+                        <div class="card text-center shadow-sm p-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Sample</h6>
+                                <i class="bi bi-droplet" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Authorized Signatory Card -->
+<!--                <div class="col-md-3 mb-3">-->
+<!--                    <a href="/lis/lab-setup/authorized-signatory" class="text-decoration-none">-->
+<!--                        <div class="card text-center shadow-sm p-3">-->
+<!--                            <div class="card-body">-->
+<!--                                <h6 class="card-title">Authorized Signatory</h6>-->
+<!--                                <i class="bi bi-person-badge" style="font-size: 2rem; color: #6c757d;"></i>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </a>-->
+<!--                </div>-->
+            </div>
+
+            <div class="row justify-content-end mt-4">
+                <div class="col-md-3">
+                    <button class="btn btn-danger btn-md" style="width: 100%;" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class="bi bi-box-arrow-right" style="font-size: 1.5rem;"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Logout Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="bi bi-box-arrow-right" style="font-size: 3rem; color: #dc3545;"></i>
+                    <p>Are you sure you want to log out?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="/lis/logout" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div th:insert="fragments :: footer"></div>
+</div>
+<script>
+    window.onload = async function () {
+        try {
+            // Fetch user type
+            let userResponse = await fetch('/lis/user-type');
+            let userData = await userResponse.json();
+
+            if (userData.type === "lab_attendant") {
+                document.querySelectorAll('.onlyAdmin').forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+
+            // Show page content after data is fetched
+            document.getElementById('page-content').style.display = 'block';
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            document.getElementById('page-content').style.display = 'block'; // Show content even if error occurs
+        }
+    };
+</script>
+<script>
+    // Function to fetch the count of pending requisitions
+    function fetchPendingRequisitions() {
+        fetch('/lis/api/requisitions/pending-count')
+            .then(response => response.text())
+            .then(count => {
+                // Update the text of the element with id 'pending-requisitions'
+                document.getElementById('pending-requisitions').textContent = count;
+            })
+            .catch(error => {
+                console.error('Error fetching pending requisitions count:', error);
+            });
+    }
+
+    // Fetch the count immediately when the page loads
+    fetchPendingRequisitions();
+
+    // Set up an interval to refresh the count every 5 seconds
+    setInterval(fetchPendingRequisitions, 5000);
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch the count from the Ktor route
+        fetch('/lis/laborder-count')
+            .then(response => response.json())
+            .then(data => {
+                // Update the HTML with the count
+                const countElement = document.getElementById('pending-orders');
+                countElement.textContent = data;
+            })
+            .catch(error => {
+                console.error('Error fetching lab order count:', error);
+            });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const inputField = document.getElementById("sampleRequestID");
+    const processSampleLink = document.getElementById("processSampleLink");
+    const viewRequisitionLink = document.getElementById("viewRequisitionLink");
+    const viewResultLink = document.getElementById("viewResultLink");
+
+    function updateLinkStates() {
+        const value = inputField.value.trim();
+        const length = value.length;
+
+        viewResultLink.classList.toggle("disabled", length < 1);
+        viewRequisitionLink.classList.toggle("disabled", length < 1);
+        processSampleLink.classList.toggle("disabled", length < 4);
+    }
+
+    function redirectToPage(url) {
+        const value = inputField.value.trim();
+        if (!value) return; // Ensure input is not empty
+        window.location.href = url;
+    }
+
+    inputField.addEventListener("input", updateLinkStates);
+
+    viewResultLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!viewResultLink.classList.contains("disabled")) {
+            redirectToPage(`/lis/result-printout/${inputField.value.trim()}`);
+        }
+    });
+
+    viewRequisitionLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!viewRequisitionLink.classList.contains("disabled")) {
+            redirectToPage(`/lis/view-requisition?id=${encodeURIComponent(inputField.value.trim())}`);
+        }
+    });
+
+    processSampleLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!processSampleLink.classList.contains("disabled")) {
+            redirectToPage(`/lis/process-sample?id=${encodeURIComponent(inputField.value.trim())}`);
+        }
+    });
+
+    updateLinkStates(); // Initial check
+});
+
+</script>
+
+</body>
+</html>

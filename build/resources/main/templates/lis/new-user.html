@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'ADD USER - LIS - FUTO HIS')"></head>
+<body>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='LIS USER CREATION')"></div>
+            <div class="d-flex justify-content-end mt-3 mb-3">
+                <a href="/lis" class="btn btn-secondary me-3">Go Back</a>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-center mb-4">Create New LIS User</h3>
+                    <form id="createUserForm">
+                        <!-- Step 1: Select User Category -->
+                        <div id="userCategoryStep">
+                            <div class="mb-3">
+                                <label for="userType" class="form-label">Select User Category</label>
+                                <select class="form-select" id="userType" aria-label="User Type" required>
+                                    <option value="" selected disabled>Choose a user category</option>
+                                    <option value="admin">Hospital Administrator</option>
+                                    <option value="lab_attendant">Lab Scientist</option>
+                                </select>
+                            </div>
+                            <button type="button" id="nextStep" class="btn btn-primary w-100">Next</button>
+                        </div>
+
+                        <!-- Step 2: Admin Form -->
+                        <div id="adminFormStep" class="d-none">
+                            <h4 class="mb-3">Create Admin</h4>
+                            <div class="mb-3">
+                                <label for="adminUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="adminUsername" name="username" placeholder="Enter username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="adminPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="adminPassword" name="password" placeholder="Enter password" required>
+                            </div>
+                            <span id="adminErrorMessage" class="text-danger d-block mb-2"></span>
+                            <button type="button" id="backToCategoryAdmin" class="btn btn-secondary">Back</button>
+                            <button id="createAdmin" type="button" class="btn btn-primary">
+                                <span id="adminLoader" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Create Admin
+                            </button>
+                        </div>
+
+                        <!-- Step 2: Lab Attendant Form -->
+                        <div id="labAttendantFormStep" class="d-none">
+                            <h4 class="mb-3">Create Lab Attendant</h4>
+                            <div class="mb-3">
+                                <label for="labAttendantUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="labAttendantUsername" placeholder="Enter username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="labAttendantPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="labAttendantPassword" placeholder="Enter password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="labAttendantName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="labAttendantName" placeholder="Enter name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="labAttendantEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="labAttendantEmail" placeholder="Enter email address" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="labAttendantSpecialization" class="form-label">Specialization (Optional)</label>
+                                <input type="text" class="form-control" id="labAttendantSpecialization" placeholder="Enter specialization">
+                            </div>
+                            <span id="labAttendantErrorMessage" class="text-danger d-block mb-2"></span>
+                            <button type="button" id="backToCategoryLab" class="btn btn-secondary">Back</button>
+                            <button id="createLabAttendant" type="button" class="btn btn-primary">
+                                <span id="labAttendantLoader" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Create Lab Attendant
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const userTypeSelect = document.getElementById("userType");
+        const nextStepButton = document.getElementById("nextStep");
+        const backButtons = document.querySelectorAll("[id^='backToCategory']");
+        const userCategoryStep = document.getElementById("userCategoryStep");
+        const adminFormStep = document.getElementById("adminFormStep");
+        const labAttendantFormStep = document.getElementById("labAttendantFormStep");
+        const createAdminButton = document.getElementById("createAdmin");
+        const createLabAttendantButton = document.getElementById("createLabAttendant");
+
+        // Move to the next step based on selected user type
+        nextStepButton.addEventListener("click", () => {
+            const selectedUserType = userTypeSelect.value;
+            if (selectedUserType === "admin") {
+                userCategoryStep.classList.add("d-none");
+                adminFormStep.classList.remove("d-none");
+            } else if (selectedUserType === "lab_attendant") {
+                userCategoryStep.classList.add("d-none");
+                labAttendantFormStep.classList.remove("d-none");
+            } else {
+                alert("Please select a valid user category.");
+            }
+        });
+
+        // Go back to user category selection
+        backButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                userCategoryStep.classList.remove("d-none");
+                adminFormStep.classList.add("d-none");
+                labAttendantFormStep.classList.add("d-none");
+            });
+        });
+
+        // Submit admin form
+        createAdminButton.addEventListener("click", async () => {
+            const username = document.getElementById("adminUsername").value;
+            const password = document.getElementById("adminPassword").value;
+
+            if (!username || !password) {
+                document.getElementById("adminErrorMessage").textContent = "All fields are required.";
+                return;
+            }
+
+            document.getElementById("adminLoader").classList.remove("d-none");
+
+            await createUser(
+                { username, password },
+                "Admin",
+                "/lis/create-admin",
+                "adminLoader",
+                "adminErrorMessage"
+            );
+        });
+
+        // Submit lab attendant form
+        createLabAttendantButton.addEventListener("click", async () => {
+            const username = document.getElementById("labAttendantUsername").value;
+            const password = document.getElementById("labAttendantPassword").value;
+            const name = document.getElementById("labAttendantName").value;
+            const email = document.getElementById("labAttendantEmail").value;
+            const specialization = document.getElementById("labAttendantSpecialization").value;
+
+            if (!username || !password || !name || !email) {
+                document.getElementById("labAttendantErrorMessage").textContent = "All fields except specialization are required.";
+                return;
+            }
+
+            document.getElementById("labAttendantLoader").classList.remove("d-none");
+
+            await createUser(
+                { username, password, name, email, specialization },
+                "Lab Attendant",
+                "/lis/create-lab-attendant",
+                "labAttendantLoader",
+                "labAttendantErrorMessage"
+            );
+        });
+
+        // Generic create user function
+       async function createUser(userData, userType) {
+            const endpoint = userType === "Admin" ? "/lis/create-admin" : "/lis/create-lab-attendant";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(userData),
+                });
+
+                // Check if the response has a body
+                const responseBody = await response.text();
+                if (!responseBody) {
+                    alert("No response from server");
+                    return;
+                }
+
+                // Parse the response only if it's JSON
+                const result = JSON.parse(responseBody);
+
+                if (response.ok) {
+                    alert(`${userType} created successfully!`);
+                    document.getElementById("createUserForm").reset();
+                    document.getElementById("labAttendantLoader").classList.add("d-none");
+                    document.getElementById("adminLoader").classList.remove("d-none");
+                } else {
+                    alert(result.message || `Failed to create ${userType}.`);
+                }
+            } catch (error) {
+                alert(`An unexpected error occurred: ${error.message}`);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:fragment="head (title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">HOME - FUTO HIS</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+          integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=experiment" />
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<head th:insert="fragments :: head(title = 'DASHBOARD - LIS Admin Portal - FUTO HIS')"></head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='BIOHAZARD INCIDENT REPORTING')"></div>
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    Log new biohazard incident
+                </div>
+                <div class="card-body">
+                    <form id="biohazardForm">
+                        <div class="mb-3">
+                            <label for="requisition" class="form-label">Enter Requisition id</label>
+                            <input class="form-control" id="requisition" type="number"  name="requisition" required></input>
+                        </div>
+                        <!-- Lab Officer Involved -->
+                        <div class="mb-3">
+                            <label for="labOfficer" class="form-label">Lab Officer Involved</label>
+                            <select class="form-select" id="labOfficer" name="labOfficer" required>
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+
+
+                        <!-- Select Biohazard Level -->
+                        <div class="mb-3">
+                            <label for="biohazardLevel" class="form-label">Biohazard Level</label>
+                            <select class="form-select" id="biohazardLevel" name="biohazardLevel" required>
+                                <option value="">-- Select --</option>
+                                <option value="BSL-1">BSL-1 (Minimal)</option>
+                                <option value="BSL-2">BSL-2 (Moderate)</option>
+                                <option value="BSL-3">BSL-3 (Serious)</option>
+                                <option value="BSL-4">BSL-4 (Complex/Extreme)</option>
+                            </select>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="hazardDescription" class="form-label">Describe Hazard</label>
+                            <textarea class="form-control" id="hazardDescription" name="hazardDescription" rows="3" required></textarea>
+                        </div>
+
+                        <!-- Submit Button with Loader -->
+                        <div class="text-end">
+                            <button type="submit" id="submitBtn" class="btn btn-dark">
+                                <span id="btnText">Submit</span>
+                                <span id="btnLoader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:insert="fragments :: footer"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch lab officers when the page is loaded
+        fetch('/lis/biohazards/lab-officers')
+            .then(response => response.json())
+            .then(data => {
+                let labOfficerSelect = document.getElementById('labOfficer');
+
+                // Loop through the data and create <option> elements for the select dropdown
+                data.forEach(officer => {
+                    let option = document.createElement('option');
+                    option.value = officer.attendantId;
+                    option.textContent = officer.name;
+                    labOfficerSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching lab officers:', error);
+            });
+    });
+
+   document.getElementById('biohazardForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    let formData = new FormData(this);
+    let submitBtn = document.getElementById('submitBtn');
+    let btnText = document.getElementById('btnText');
+    let btnLoader = document.getElementById('btnLoader');
+
+    // Disable button and show loader
+    submitBtn.disabled = true;
+    btnText.textContent = "Submitting...";
+    btnLoader.classList.remove('d-none');
+
+    // Convert FormData to a plain object
+    let formObject = {};
+    formData.forEach((value, key) => {
+        formObject[key] = value;
+    });
+
+    // Send the form as JSON
+    fetch('/lis/biohazards/add', {
+        method: 'POST',
+        body: JSON.stringify(formObject),
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message); // Show feedback to the user
+        if (data.message === "Biohazard logged successfully") {
+            // Reset the form if submission was successful
+            document.getElementById("biohazardForm").reset();
+        }
+    })
+    .catch(error => console.error('Error:', error))
+    .finally(() => {
+        // Re-enable button and hide loader
+        submitBtn.disabled = false;
+        btnText.textContent = "Submit";
+        btnLoader.classList.add('d-none');
+    });
+});
+
+
+</script>
+
+</body>
+</html>

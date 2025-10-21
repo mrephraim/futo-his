@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'Requisition Details - FUTO HIS')"></head>
+<style>
+    .popup-card {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+<body>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='REQUISTION INFO')"></div>
+            <div class="row justify-content-between align-items-center mb-4">
+                <!-- Navigation Buttons -->
+                <div class="col-md-12 d-flex justify-content-between">
+                    <a href="/lis/new-requisition" class="btn btn-success hover-pill">
+                        <i class="bi bi-plus-circle"></i> Add New Requisition
+                    </a>
+                    <a href="/lis/requisitions" class="btn btn-secondary hover-pill">
+                        <i class="bi bi-list"></i> View Other Requisitions
+                    </a>
+                    <a href="/lis" class="btn btn-secondary hover-pill">
+                        <i class="bi bi-house"></i> Home
+                    </a>
+                </div>
+            </div>
+
+            <!-- Requisition Details Card -->
+            <div class="card hover-card shadow-lg">
+                <div class="card-header text-center bg-success text-white">
+                    <h4>Requisition Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> <span id="fullName"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Patient Registration No:</strong> <span id="patientRegNo"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Test Category:</strong> <span id="testCategoryId"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Lab Test:</strong> <span id="labTestId"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <p><strong>Sample Type:</strong> <span id="sampleTypeId"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Sample ID:</strong> <span id="sampleId"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Collection Date/Time:</strong> <span id="collectionDateTime"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Priority Level:</strong> <span id="priorityLevel"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <p><strong>Clinical Notes:</strong> <span id="clinicalNotes"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Request Format:</strong> <span id="requestFormat"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Requesting Physician:</strong> <span id="physician"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Authorizing Officer:</strong> <span id="authorizingOfficer"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> <span id="status"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="" id="process-requisition-link" class="btn btn-success process-requisition-link">Process Requisition</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const requisitionId = urlParams.get("id"); // Assuming the ID is in the URL as ?id=123
+        const processButton = document.getElementById("process-requisition-link");
+
+        if (requisitionId) {
+            fetch(`/lis/api/requisition/${requisitionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate requisition details
+                    document.getElementById("patientRegNo").textContent = data.patientRegNo || "N/A";
+                    document.getElementById("fullName").textContent = data.fullName || "N/A";
+                    document.getElementById("requestFormat").textContent = data.requestFormat || "N/A";
+                    document.getElementById("physician").textContent = data.physician || "N/A";
+                    document.getElementById("testCategoryId").textContent = data.testCategoryId || "N/A";
+                    document.getElementById("labTestId").textContent = data.labTestId || "N/A";
+                    document.getElementById("sampleTypeId").textContent = data.sampleTypeId || "N/A";
+                    document.getElementById("collectionDateTime").textContent = data.collectionDateTime || "N/A";
+                    document.getElementById("priorityLevel").textContent = data.priorityLevel || "N/A";
+                    document.getElementById("clinicalNotes").textContent = data.clinicalNotes || "N/A";
+                    document.getElementById("sampleId").textContent = data.sampleId || "Not Assigned";
+                    document.getElementById("authorizingOfficer").textContent = data.authorizingOfficer || "N/A";
+                    document.getElementById("status").textContent = data.status || "N/A";
+
+
+                    // Display alert based on BSL level
+                    displayBiosecurityAlert(data.bsl);
+                    processButton.href = `/lis/process-result?id=${requisitionId}`;
+                })
+                .catch(error => console.error("Error fetching requisition data:", error));
+        } else {
+            console.error("No requisition ID provided in URL.");
+        }
+    });
+
+    function displayBiosecurityAlert(biosecurityLevel) {
+        let alertMessage = "";
+        let alertClass = "";
+        let safetyPrecautions = "";
+
+        // Handle biosecurity level based on the integer value
+        switch (biosecurityLevel) {
+            case "1":
+                alertMessage = "Biosecurity Level 1: Low Risk";
+                alertClass = "alert-success"; // Green
+                safetyPrecautions = "1. Standard microbiological practices\n2. Regular handwashing";
+                break;
+            case "2":
+                alertMessage = "Biosecurity Level 2: Moderate Risk";
+                alertClass = "alert-warning"; // Yellow
+                safetyPrecautions = "1. Lab coats, gloves, and goggles\n2. Proper waste disposal\n3. Restricted access to lab";
+                break;
+            case "3":
+                alertMessage = "Biosecurity Level 3: High Risk";
+                alertClass = "alert-danger"; // Red
+                safetyPrecautions = "1. Respiratory protection\n2. Enhanced waste handling\n3. Work in biosafety cabinets";
+                break;
+            case "4":
+                alertMessage = "Biosecurity Level 4: Maximum Risk";
+                alertClass = "alert-danger"; // Red
+                safetyPrecautions = "1. Full-body suits with self-contained breathing apparatus\n2. Strict isolation protocols\n3. High-level containment";
+                break;
+            default:
+                alertMessage = "Unknown Biosecurity Level";
+                alertClass = "alert-info"; // Blue
+                safetyPrecautions = "Precautions not available";
+        }
+
+        // Create the custom popup card
+        const popupCard = document.createElement("div");
+        popupCard.classList.add("popup-card", "card", "shadow-lg", "fade", "show");
+        popupCard.setAttribute("role", "alert");
+        popupCard.style.position = "fixed";
+        popupCard.style.top = "20%";
+        popupCard.style.left = "50%";
+        popupCard.style.transform = "translateX(-50%)";
+        popupCard.style.zIndex = "9999";
+        popupCard.style.width = "60%";
+        popupCard.style.padding = "20px";
+        popupCard.style.borderRadius = "10px";
+        popupCard.style.backgroundColor = "#fff";
+
+        // Add content to the card
+        popupCard.innerHTML = `
+            <div class="card-header ${alertClass}">
+                <strong>${alertMessage}</strong>
+            </div>
+            <div class="card-body">
+                <h5>Safety Precautions:</h5>
+                <pre>${safetyPrecautions}</pre>
+            </div>
+            <div class="card-footer text-end">
+                <button type="button" class="btn btn-secondary" onclick="closePopup()">Close</button>
+            </div>
+        `;
+
+        // Append the popup card to the body
+        document.body.appendChild(popupCard);
+    }
+
+    // Function to close the popup card
+    function closePopup() {
+        const popupCard = document.querySelector(".popup-card");
+        if (popupCard) {
+            popupCard.remove();
+        }
+    }
+</script>
+
+
+
+
+
+</body>
+</html>

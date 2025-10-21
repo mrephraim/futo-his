@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:insert="fragments :: head(title = 'Inventory Management - PIS Admin Portal - FUTO HIS')"></head>
+<style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .prescription-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    }
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .btn-dark {
+      border-radius: 8px;
+    }
+</style>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='Inventory Home - FUTO PIS')"></div>
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold">Manage Inventory</h3>
+                <a class="btn btn-dark" href="/pis/receive-stock">
+                    <i class="bi bi-plus"></i> Receive Stock
+                </a>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">
+                            <i class="bi bi-capsule me-2"></i> Drugs Inventory
+                        </h5>
+
+                        <!-- Search + Filter -->
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <div class="flex-grow-1">
+                                <input type="text" class="form-control" placeholder="">
+                            </div>
+                            <div>
+                                <div class="dropdown mb-3">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-funnel me-1"></i> Filter: All
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="filterButton">
+                                        <li><a class="dropdown-item filter-option" data-status="ALL" href="#">All</a></li>
+                                        <li><a class="dropdown-item filter-option" data-status="OK" href="#">OK</a></li>
+                                        <li><a class="dropdown-item filter-option" data-status="LOW_STOCK" href="#">Low Stock</a></li>
+                                        <li><a class="dropdown-item filter-option" data-status="OUT_OF_STOCK" href="#">Out of Stock</a></li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Inventory List -->
+                        <div id="inventoryContainer">
+
+                            <!-- Single Card -->
+                            <!-- Repeat more cards here -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+
+    </div>
+    <div th:insert="fragments :: footer"></div></div>
+
+<script>
+    function formatStatus(status) {
+      if (status === "OK") return "Good";
+      if (status === "LOW_STOCK") return "Low Stock";
+      if (status === "OUT_OF_STOCK") return "Out of Stock";
+      return status;
+    }
+
+    async function loadInventory(filter = "ALL") {
+      try {
+        const url = filter !== "ALL" ? `/pis/inventory/all?status=${filter}` : `/pis/inventory/all`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        const container = document.getElementById("inventoryContainer");
+        container.innerHTML = "";
+
+        if (!result.success || !result.data.length) {
+          container.innerHTML = `<div class="alert alert-warning">No inventory data found</div>`;
+          return;
+        }
+
+        result.data.forEach(drug => {
+          // Drug header card
+          const drugCard = document.createElement("div");
+          drugCard.className = "border rounded p-3 mb-4";
+
+          let packagesHtml = "";
+          drug.packages.forEach(pkg => {
+            let badgeClass = "bg-success";
+            if (pkg.status === "LOW_STOCK") badgeClass = "bg-warning text-dark";
+            if (pkg.status === "OUT_OF_STOCK") badgeClass = "bg-danger";
+
+            packagesHtml += `
+              <div class="border rounded p-2 mb-2">
+                <h6 class="mb-1">${pkg.packageName}</h6>
+                <span class="badge ${badgeClass}">${formatStatus(pkg.status)}</span>
+                <p class="mb-1"><strong>Stock Remaining:</strong> ${pkg.totalQuantityRemaining}</p>
+                <p class="mb-1"><strong>Total Entered:</strong> ${pkg.totalQuantityEntered}</p>
+                <p class="mb-1"><strong>Latest Cost:</strong> ₦${pkg.latestCost ?? "N/A"}</p>
+                <p class="mb-0"><strong>Total Valuation:</strong> ₦${(pkg.totalQuantityRemaining * (pkg.latestCost ?? 0)).toLocaleString()}</p>
+              </div>
+            `;
+          });
+
+          drugCard.innerHTML = `
+            <h5 class="fw-bold mb-2">${drug.drugName}
+              <span class="badge bg-light text-dark border">${drug.category}</span>
+              <span class="badge bg-info text-dark">${drug.generic}</span>
+            </h5>
+            <div class="ms-3">
+              ${packagesHtml}
+            </div>
+          `;
+
+          container.appendChild(drugCard);
+        });
+      } catch (err) {
+        console.error("Error loading inventory", err);
+        document.getElementById("inventoryContainer").innerHTML =
+          `<div class="alert alert-danger">Failed to fetch inventory data</div>`;
+      }
+    }
+
+    // Handle filter change
+    document.querySelectorAll(".filter-option").forEach(option => {
+      option.addEventListener("click", (e) => {
+        e.preventDefault();
+        const status = option.dataset.status;
+        document.getElementById("filterButton").innerHTML = `<i class="bi bi-funnel me-1"></i> Filter: ${status}`;
+        loadInventory(status);
+      });
+    });
+
+    // Initial load
+    loadInventory();
+</script>
+</body>
+</html>

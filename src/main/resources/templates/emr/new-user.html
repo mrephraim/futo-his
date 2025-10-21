@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'ADD PATIENT - EMR - FUTO HIS')"></head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='EMR USER CREATION')"></div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-end mt-3 mb-3">
+                        <a href="/emr/dashboard/" class="btn btn-secondary me-3">Go Back</a>
+                    </div>
+                    <form id="createUserForm">
+                        <!-- Step 1: Select User Category -->
+                        <div id="userCategoryStep">
+                            <div class="mb-3">
+                                <label for="userType" class="form-label">Select User Category</label>
+                                <select class="form-select" id="userType" aria-label="User Type">
+                                    <option value="" selected disabled>Choose a user category</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="doctor">Doctor</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button type="button" id="nextStep" class="btn btn-primary">Next</button>
+                        </div>
+
+                        <!-- Step 2: Admin Form -->
+                        <div id="adminFormStep" class="d-none">
+                            <h4 class="mb-3">Create Admin</h4>
+                            <div class="mb-3">
+                                <label for="adminUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="adminUsername" name="username" placeholder="Enter username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="adminPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="adminPassword" name="password" placeholder="Enter password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="adminType" class="form-label">User Type</label>
+                                <input type="text" class="form-control" id="adminType" name="type" value="Admin" readonly>
+                            </div>
+                            <span id="adminErrorMessage" class="text-danger d-block mb-2"></span>
+                            <button type="button" id="backToCategory" class="btn btn-secondary">Back</button>
+                            <button id="createAdmin" type="button" class="btn btn-primary">
+                                <span id="adminLoader" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Create Admin
+                            </button>
+                        </div>
+
+                        <!-- Step 2: Doctor Form -->
+                        <div id="doctorFormStep" class="d-none">
+                            <h4 class="mb-3">Create Doctor</h4>
+                            <div class="mb-3">
+                                <label for="adminUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="doctorUsername" placeholder="Enter username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="adminPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="doctorPassword" placeholder="Enter password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="doctorName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="doctorName" placeholder="Enter Doctor's Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="doctorSpecialization" class="form-label">Specialization</label>
+                                <input type="text" class="form-control" id="doctorSpecialization" placeholder="Enter Specialization" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="doctorPhone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="doctorPhone" placeholder="Enter Phone Number" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="doctorEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="doctorEmail" placeholder="Enter Email Address" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="doctorOffice" class="form-label">Office Location</label>
+                                <input type="text" class="form-control" id="doctorOffice" placeholder="Enter Office Location" required>
+                            </div>
+                            <span id="doctorErrorMessage" class="text-danger d-block mb-2"></span>
+                            <button type="button" id="backToCategory" class="btn btn-secondary">Back</button>
+                            <button id="createDoctor" type="button" class="btn btn-primary">
+                                <span id="doctorLoader" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Create Doctor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const userTypeSelect = document.getElementById("userType");
+    const nextStepButton = document.getElementById("nextStep");
+    const backButtons = document.querySelectorAll("#backToCategory");
+    const userCategoryStep = document.getElementById("userCategoryStep");
+    const adminFormStep = document.getElementById("adminFormStep");
+    const doctorFormStep = document.getElementById("doctorFormStep");
+
+    nextStepButton.addEventListener("click", () => {
+        const selectedUserType = userTypeSelect.value;
+        if (selectedUserType === "admin") {
+            userCategoryStep.classList.add("d-none");
+            adminFormStep.classList.remove("d-none");
+        } else if (selectedUserType === "doctor") {
+            userCategoryStep.classList.add("d-none");
+            doctorFormStep.classList.remove("d-none");
+        } else {
+            alert("Please select a valid user category.");
+        }
+    });
+
+    backButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            userCategoryStep.classList.remove("d-none");
+            adminFormStep.classList.add("d-none");
+            doctorFormStep.classList.add("d-none");
+        });
+    });
+
+
+
+     // Common function to toggle loader
+    const toggleLoader = (buttonId, loaderId, show) => {
+        const button = document.getElementById(buttonId);
+        const loader = document.getElementById(loaderId);
+        if (show) {
+            loader.classList.remove("d-none");
+            button.disabled = true;
+        } else {
+            loader.classList.add("d-none");
+            button.disabled = false;
+        }
+    };
+
+        // Function to handle error messages
+        const displayError = (errorSpanId, message) => {
+            const errorSpan = document.getElementById(errorSpanId);
+            errorSpan.textContent = message;
+        };
+
+        // Handle Admin creation
+        document.getElementById("createAdmin").addEventListener("click", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("adminUsername").value.trim();
+            const password = document.getElementById("adminPassword").value.trim();
+
+            if (!username || !password) {
+                displayError("adminErrorMessage", "Please fill out all fields.");
+                return;
+            }
+
+            toggleLoader("createAdmin", "adminLoader", true);
+
+            try {
+                const response = await fetch("/emr/new-user", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, passwordHash: password, type: "Admin" }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayError("adminErrorMessage", "");
+                    alert("Admin created successfully!");
+                    document.getElementById("createUserForm").reset();
+                } else {
+                    const error = await response.json();
+                    displayError("adminErrorMessage", error.message || "Failed to create admin.");
+                }
+            } catch (err) {
+                displayError("adminErrorMessage", "An unexpected error occurred.");
+            } finally {
+                toggleLoader("createAdmin", "adminLoader", false);
+            }
+        });
+
+        // Handle Doctor creation
+        document.getElementById("createDoctor").addEventListener("click", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("doctorUsername").value.trim();
+            const password = document.getElementById("doctorPassword").value.trim();
+            const name = document.getElementById("doctorName").value.trim();
+            const specialization = document.getElementById("doctorSpecialization").value.trim();
+            const phoneNo = document.getElementById("doctorPhone").value.trim();
+            const email = document.getElementById("doctorEmail").value.trim();
+            const officeLocation = document.getElementById("doctorOffice").value.trim();
+
+            if (!username || !password || !name || !specialization || !phoneNo || !email || !officeLocation) {
+                displayError("doctorErrorMessage", "Please fill out all fields.");
+                return;
+            }
+
+            toggleLoader("createDoctor", "doctorLoader", true);
+
+            try {
+                const response = await fetch("/emr/add-doctor", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, passwordHash: password, name, specialization, phoneNo, email, officeLocation }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        displayError("doctorErrorMessage", "");
+                        alert("Doctor created successfully!");
+                        document.getElementById("createUserForm").reset();
+                    } else {
+                        displayError("doctorErrorMessage", result.message || "Failed to create doctor.");
+                    }
+                } else {
+                    const error = await response.json();
+                    displayError("doctorErrorMessage", error.message || "Failed to create doctor.");
+                }
+            } catch (err) {
+                displayError("doctorErrorMessage", "An unexpected error occurred.");
+            } finally {
+                toggleLoader("createDoctor", "doctorLoader", false);
+            }
+        });
+    });
+
+</script>
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

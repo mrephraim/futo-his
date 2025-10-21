@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title='Lab Test Mapping - Add Test')"></head>
+<style>
+    .dropdown-menu {
+        position: absolute;
+        width: 100%;
+        z-index: 1050; /* Make sure it stays above other content */
+        background-color: #fff;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        display: flex;
+        flex-direction: column;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    #searchParameters, #searchSampleTypes {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #parametersSelected, #sampleTypesSelected {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .badge {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: #fff;
+        border-radius: 12px;
+    }
+
+    .btn-close {
+        color:white;
+    }
+
+
+
+</style>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='FUTO LIS')"></div>
+            <div class="card shadow-sm p-4">
+                <div class="d-flex justify-content-end mt-3 mb-3">
+                  <a href="/lis" class="btn btn-secondary me-3">Go Back</a>
+                </div>
+                <h2 class="my-4 text-center">Setup New Lab Test</h2>
+                <form id="labTestForm">
+
+                    <!-- Test Name -->
+                    <div class="mb-3">
+                        <label for="testName" class="form-label">Test Name</label>
+                        <input type="text" class="form-control" id="testName" name="testName" required>
+                    </div>
+
+                    <!-- Test Category -->
+                    <div class="mb-3">
+                        <label for="testCategory" class="form-label">Test Category</label>
+                        <select class="form-select" id="testCategory" name="testCategory">
+                            <!-- Options will be populated here -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="biohazardLevel" class="form-label">Biosecurity Level</label>
+                        <select class="form-select" id="biohazardLevel" name="biohazardLevel">
+                            <option value="1" >BSL-1 (minimal biohazard risk)</option>
+                            <option value="2" >BSL-2 (moderate biohazard risk)</option>
+                            <option value="3" >BSL-3 (serious biohazard risk)</option>
+                            <option value="4" >BSL-4 (high containment & extremely dangerous pathogens)</option>
+                        </select>
+                    </div>
+
+
+                    <!-- Parameters -->
+                    <div class="mb-3">
+                        <label for="parameters" class="form-label">Parameters</label>
+                        <div class="dropdown">
+                            <input type="text" id="searchParameters"  class="form-control" placeholder="Search Parameters" autocomplete="off">
+                            <ul class="dropdown-menu w-100" id="parametersOptions" style="display: none;">
+                                <!-- Options dynamically generated -->
+                            </ul>
+                        </div>
+                        <div id="parametersSelected" class="mt-2">
+                            <!-- Selected options as pills -->
+                        </div>
+                    </div>
+
+                    <!-- Sample Types -->
+                    <div class="mb-3">
+                        <label for="sampleTypes" class="form-label">Sample Types</label>
+                        <div class="dropdown">
+                            <input type="text" id="searchSampleTypes" class="form-control" placeholder="Search Sample Types" autocomplete="off">
+                            <ul class="dropdown-menu w-100" id="sampleTypesOptions" style="display: none;">
+                                <!-- Options dynamically generated -->
+                            </ul>
+                        </div>
+                        <div id="sampleTypesSelected" class="mt-2">
+                            <!-- Selected options as pills -->
+                        </div>
+                    </div>
+
+
+
+
+                    <button type="submit" class="btn btn-success w-100">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:insert="fragments :: footer"></div>
+<script src="/static/newtest.js"></script>
+</body>
+</html>

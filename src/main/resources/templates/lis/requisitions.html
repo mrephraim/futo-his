@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'Requisitions - LIS Admin Portal - FUTO HIS')"></head>
+<style>
+    .container {
+        margin-top: 20px;
+    }
+    .table th, .table td {
+        text-align: left;
+    }
+    .dropdown {
+        margin-bottom: 20px;
+    }
+</style>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="mb-4" th:insert="fragments :: headerOne(title='REQUISITION MANAGEMENT')"></div>
+
+            <!-- Dropdown to Select View Type -->
+            <div class="dropdown">
+                <label for="viewType" class="form-label">Select Requisition View:</label>
+                <select id="viewType" class="form-select" onchange="changeViewType()">
+                    <option value="all">All Requisitions</option>
+                    <option value="pending">Pending Requisitions</option>
+                    <option value="processed">Processed Requisitions</option>
+                    <option value="archived">Archived Requisitions</option>
+                </select>
+            </div>
+
+            <!-- Requisitions Table -->
+            <div class="card shadow-sm">
+                <h2 class="card-title card-header">Requisitions</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr>
+                            <th>Requisition ID</th>
+                            <th>Patient Name</th>
+                            <th>Reg No</th>
+                            <th>Lab Test</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="requisitionsTableBody">
+                        <!-- Data will be dynamically loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:insert="fragments :: footer"></div>
+</div>
+
+<script>
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name) || 'all';
+    }
+
+    function changeViewType() {
+        const selectedType = document.getElementById("viewType").value;
+        window.location.href = `/lis/requisitions?type=${selectedType}`;
+    }
+
+    async function fetchRequisitions() {
+        const type = getUrlParameter('type');
+        document.getElementById("viewType").value = type; // Set dropdown to match URL param
+
+        try {
+            const response = await fetch(`/lis/api/requisitions?type=${type}`);
+            if (response.ok) {
+                const requisitions = await response.json();
+                populateRequisitionsTable(requisitions);
+            } else {
+                console.error('Error fetching requisitions:', response.statusText);
+                alert('Failed to load requisitions.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while fetching requisitions.');
+        }
+    }
+
+    function populateRequisitionsTable(requisitions) {
+        const tableBody = document.getElementById('requisitionsTableBody');
+        tableBody.innerHTML = ''; // Clear table
+
+        requisitions.forEach(req => {
+            const row = document.createElement('tr');
+
+            // Make entire row clickable
+            row.onclick = () => {
+                window.location.href = `/lis/view-requisition?id=${req.id}`;
+            };
+            row.style.cursor = "pointer"; // Indicate clickable row
+
+            // Determine the action button based on status
+            let actionButton = "";
+            if (req.status === "Pending") {
+                actionButton = `<a href="/lis/process-result?id=${req.id}" class="btn btn-outline-primary btn-sm">Process Results</a>`;
+            } else if (req.status === "Published") {
+                actionButton = `<a href="/lis/result-printout/${req.id}" class="btn btn-outline-success btn-sm">Reprint Result</a>`;
+            } else if (req.status === "Archived") {
+                actionButton = `<button class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation(); unarchiveRequisition(${req.id})">Unarchive</button>`;
+            }
+
+            row.innerHTML = `
+                <td>${req.id}</td>
+                <td>${req.patientName}</td>
+                <td>${req.regNo}</td>
+                <td>${req.labTest}</td>
+                <td>${req.status}</td>
+                <td>${actionButton}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    async function unarchiveRequisition(id) {
+        try {
+            const response = await fetch(`/lis/api/requisitions/unarchive/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                alert('Requisition successfully unarchived!');
+                fetchRequisitions(); // Refresh the table
+            } else {
+                alert('Failed to unarchive requisition.');
+            }
+        } catch (error) {
+            console.error('Error unarchiving requisition:', error);
+            alert('An error occurred while unarchiving.');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchRequisitions);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'DASHBOARD - EMR - FUTO HIS')"></head>
+<style>
+    /* Optional: Add styling to visually disable the link */
+    .disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+</style>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='FUTO EMR CPANEL')"></div>
+            <div class="row align-items-center mb-5 mt-2">
+                <!-- User Card -->
+                <div class="col-md-4 mb-3">
+                    <div class="card" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle" style="font-size: 2rem; margin-right: 10px;"></i>
+                            <div>
+                                <h6 class="mb-0" th:text="${userName}"></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Input Group -->
+                <div class="col-md-8 mb-3">
+                    <div class="input-group" style="width:100%;">
+                        <input type="text" id="patientRegNo" class="form-control form-control-lg" aria-label="Text input with dropdown button" placeholder="Enter patient reg-no or id to confirm action">
+                        <button class="btn btn-lg btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Patient</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item onlyAdmin" href="#" id="bookAppointment">Book Appointment</a></li>
+                            <li><a class="dropdown-item" href="#" id="openFolderLink">Open Folder</a></li>
+                            <li><a class="dropdown-item onlyAdmin" href="#" id="editInfoLink">Edit Info</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <!-- Card with plus icon for adding new patients -->
+                <div class="col-md-6 mb-3">
+                    <a href="/emr/add-patient" class="text-decoration-none text-dark onlyAdmin">
+                        <div class="card text-center shadow p-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Add New Patient</h5>
+                                <i class="bi bi-plus-circle" style="font-size: 3rem; color: #28a745;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+                <!-- Card showing total patients -->
+                <div class="col-md-6 mb-3">
+                    <div class="card text-center shadow p-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Patients</h5>
+                            <p class="card-text display-4"><span id="patient-count">--</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="/emr/new-user" class="text-decoration-none text-dark onlyAdmin">
+                        <div class="card text-center shadow p-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Create New EMR User</h5>
+                                <i class="bi bi-plus-circle" style="font-size: 3rem; color: #28a745;"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="row justify-content-end mt-4">
+                <div class="col-md-3">
+                    <button class="btn btn-danger btn-md" style="width: 100%;" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class="bi bi-box-arrow-right" style="font-size: 1.5rem;"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Logout Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="bi bi-box-arrow-right" style="font-size: 3rem; color: #dc3545;"></i>
+                    <p>Are you sure you want to log out?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="/emr/logout" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div th:insert="fragments :: footer"></div>
+<script>
+    window.onload = async function () {
+        try {
+            // Fetch total patients
+            let patientResponse = await fetch('/emr/total-patients');
+            let patientData = await patientResponse.json();
+            document.getElementById('patient-count').textContent = patientData.total;
+
+            // Fetch user type
+            let userResponse = await fetch('/emr/user-type');
+            let userData = await userResponse.json();
+
+            if (userData.type === "Doctor") {
+                document.querySelectorAll('.onlyAdmin').forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+</script>
+
+<script>
+    function updateLinks() {
+        const regNoInput = document.getElementById('patientRegNo').value.trim();
+        const bookAppointmentLink = document.getElementById('bookAppointment');
+        const openFolderLink = document.getElementById('openFolderLink');
+        const editInfoLink = document.getElementById('editInfoLink');
+
+        // Check if regNo is exactly 11 digits
+        if (/^\d{11}$/.test(regNoInput)) {
+            // Update href attributes for valid regNo
+            bookAppointmentLink.href = `/emr/new-appointment/${regNoInput}`;
+            openFolderLink.href = `/emr/folder/${regNoInput}`;
+            editInfoLink.href = `/emr/edit-patient/${regNoInput}`;
+
+            // Enable all links
+            bookAppointmentLink.classList.remove('disabled');
+            openFolderLink.classList.remove('disabled');
+            editInfoLink.classList.remove('disabled');
+        } else {
+            // Reset href attributes for invalid regNo
+            bookAppointmentLink.href = '#';
+            openFolderLink.href = '#';
+            editInfoLink.href = '#';
+
+            // Disable all links
+            bookAppointmentLink.classList.add('disabled');
+            openFolderLink.classList.add('disabled');
+            editInfoLink.classList.add('disabled');
+        }
+    }
+
+    // Listen for input changes to validate and update all links
+    document.getElementById('patientRegNo').addEventListener('input', updateLinks);
+</script>
+
+</body>
+</html>

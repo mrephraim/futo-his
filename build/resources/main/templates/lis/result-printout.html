@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'Print out - Lab Result #'+${requisitionId}+' - FUTO Health Services')"></head>
+<script>
+    @GetMapping("/lis/result-printout/{id}")
+    fun getLabResult(@PathVariable id: Int, model: Model): String {
+        model.addAttribute("requisitionId", id)
+        return "lab_result_page" // Name of your Thymeleaf template
+    }
+
+</script>
+<head>
+    <title></title>
+    <style>
+        @media print {
+            #print-btn, #back-btn {
+                display: none;
+            }
+        }
+        .container {
+            max-width: 210mm;
+            min-height: 260mm;
+            margin: auto;
+            padding: 30px;
+            border: 2px solid black;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+        .lab-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .lab-header img {
+            width: 100px;
+            height: auto;
+        }
+        .lab-header h2 {
+            margin: 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .table th, .table td {
+            text-align: left;
+            border: 1px solid black;
+            padding: 8px;
+        }
+        .signatory {
+            margin-top: 50px;
+            text-align: right;
+            font-weight: bold;
+        }
+        @media print {
+        #print-btn, #back-btn {
+            display: none !important;
+        }
+        body {
+            width: 210mm;
+            height: 260mm;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+    <div class="lab-header">
+        <img src="/static/img/futo_logo.png" alt="FUTO Health Services">
+        <h2>FUTO Health Services</h2>
+        <h3>Laboratory Test Report</h3>
+    </div>
+
+    <div id="patient-info" class="mb-3">
+        <p><strong>Patient Name:</strong> <span id="fullName" style="text-transform:uppercase;"></span></p>
+        <p><strong>Registration No:</strong> <span id="patientRegNo" style="text-transform:uppercase;"></span></p>
+        <p><strong>Test:</strong> <span id="labTest" style="text-transform:uppercase;"></span></p>
+        <p><strong>Requested:</strong> <span id="rDate" style="text-transform:uppercase;"></span></p>
+        <p><strong>Published:</strong> <span id="pDate" style="text-transform:uppercase;"></span></p>
+        <p><strong>Processed By:</strong> <span id="authorizingOfficer" style="text-transform:uppercase;"></span></p>
+<!--        <p><strong>Physician:</strong> <span id="physician" style="text-transform:uppercase;"></span></p>-->
+<!--        <p><strong>Sample Type:</strong> <span id="sampleType" style="text-transform:uppercase;"></span></p>-->
+<!--        <p><strong>Collection Date:</strong> <span id="collectionDateTime" style="text-transform:uppercase;"></span></p>-->
+<!--        <p><strong>Priority Level:</strong> <span id="priorityLevel" style="text-transform:uppercase;"></span></p>-->
+<!--        <p><strong>Authorizing Officer:</strong> <span id="authorizingOfficer" style="text-transform:uppercase;"></span></p>-->
+    </div>
+
+    <h4>Test Results</h4>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Result</th>
+        </tr>
+        </thead>
+        <tbody id="results-table" ></tbody>
+    </table>
+
+    <h4>Remarks</h4>
+    <ul id="comments-list"></ul>
+
+    <div class="signatory">
+        <p>______________________________</p>
+        <p>Authorized Signatory</p>
+    </div>
+
+    <div class="no-print mt-3">
+        <button class="btn btn-secondary" id="back-btn" onclick="goBack()">Go Back</button>
+        <button class="btn btn-primary" id="print-btn" onclick="printPage()">Print</button>
+    </div>
+</div>
+
+<div th:insert="fragments :: footer"></div>
+<script>
+    function getIdFromUrl() {
+        const pathParts = window.location.pathname.split("/");
+        const id = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+        return id;
+    }
+
+    async function fetchResults() {
+        const id = getIdFromUrl();
+        if (!id || isNaN(id)) {
+            console.error("Invalid ID extracted from URL.");
+            return;
+        }
+        const response = await fetch(`/lis/results/print/${id}`);
+        const data = await response.json();
+
+        document.getElementById("fullName").innerText = data.requisition.fullName;
+        document.getElementById("patientRegNo").innerText = data.requisition.patientRegNo;
+        document.getElementById("labTest").innerText = data.requisition.labTestId;
+        document.getElementById("rDate").innerText = formatDateTime(data.requisition.collectionDateTime);
+        document.getElementById("pDate").innerText = formatDateTime(data.parameters.lastUpdated);
+        document.getElementById("authorizingOfficer").innerText = data.requisition.authorizingOfficer;
+
+       const resultsTable = document.getElementById("results-table");
+        resultsTable.innerHTML = data.parameters.parameters.map(p => {
+            let formattedValue = p.value;
+
+            // Handle different data types
+            if (typeof p.value === "string") {
+                if (p.value.startsWith("FloatValue(value=")) {
+                    formattedValue = p.value.replace("FloatValue(value=", "").replace(")", ""); // Extract float value
+                } else if (p.value.startsWith("BooleanValue(value=")) {
+                    formattedValue = p.value.replace("BooleanValue(value=", "").replace(")", "").toLowerCase(); // Extract and format boolean
+                    formattedValue = formattedValue === "true" ? "True" : "False";
+                } else if (p.value.startsWith("StringValue(value=")) {
+                    formattedValue = p.value.replace("StringValue(value=", "").replace(")", ""); // Extract string value
+                }
+            }
+
+            // Construct the formatted row
+            const formattedResult = p.dataType === "number"
+                ? `${p.name} - ${formattedValue} ${p.units.base}`
+                : `${p.name} - ${formattedValue}`;
+
+            return `<tr><td>${p.name}</td><td>${formattedResult}</td></tr>`;
+        }).join('');
+
+
+        const commentsList = document.getElementById("comments-list");
+        commentsList.innerHTML = data.comments.map(c => `<li>${c.comment}</li>`).join('');
+    }
+
+    function printPage() {
+        const printBtn = document.getElementById("print-btn");
+        const backBtn = document.getElementById("back-btn");
+
+        // Hide buttons before printing
+        if (printBtn) printBtn.style.display = "none";
+        if (backBtn) backBtn.style.display = "none";
+
+        window.print();
+
+        // Restore buttons after printing
+        setTimeout(() => {
+            if (printBtn) printBtn.style.display = "inline-block";
+            if (backBtn) backBtn.style.display = "inline-block";
+        }, 500);
+    }
+
+
+    function goBack() {
+        window.location.href = `/lis`;
+    }
+
+    function formatDateTime(dateString) {
+        const date = new Date(dateString);
+
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            return 'Invalid date';
+        }
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear().toString().slice(-2); // Get last 2 digits of the year
+        const hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+
+        const formattedDate = `${day}-${month}-${year} ${hours % 12 || 12}:${minutes} ${ampm}`;
+        return formattedDate;
+    }
+
+
+
+    window.onload = fetchResults;
+</script>
+</body>
+</html>

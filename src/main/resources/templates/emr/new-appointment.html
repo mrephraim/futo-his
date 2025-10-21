@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'NEW APPOINTMENT - EMR - FUTO HIS')"></head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='NEW APPOINTMENT')"></div>
+            <!-- Page Header -->
+            <div class="text-center mb-4">
+                <h1 class="text-primary">Appointment Booking</h1>
+                <p class="text-muted">Schedule your appointment and view your last appointment details below.</p>
+            </div>
+            <!-- Appointment Scheduling Form -->
+            <div class="col" th:if="${appointmentStatus != 1}">
+                <div class="row">
+                    <!-- Appointment Scheduling Form -->
+                    <div class="col-lg-7">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Schedule a New Appointment</h5>
+                            </div>
+                            <div class="card-body">
+                                <form action="/emr/new-appointment" method="post" id="appointmentForm">
+                                    <!-- Patient Registration Number -->
+                                    <div class="mb-3">
+                                        <label for="patientRegNo" class="form-label">Registration Number</label>
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="patientRegNo"
+                                                name="patientRegNo"
+                                                th:value="${regNo}">
+                                    </div>
+
+                                    <!-- Doctor Selection -->
+                                    <div class="mb-3">
+                                        <label for="doctorSelect" class="form-label">Select Doctor</label>
+                                        <select class="form-select" id="doctorSelect" name="doctorId" required>
+                                            <option selected disabled>Select a doctor</option>
+                                        </select>
+
+                                    </div>
+
+                                    <!-- Date and Time Picker -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="appointmentDate" class="form-label">Date</label>
+                                            <input
+                                                    type="date"
+                                                    class="form-control"
+                                                    id="appointmentDate"
+                                                    name="appointmentDate"
+                                                    required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="appointmentTime" class="form-label">Time</label>
+                                            <input
+                                                    type="time"
+                                                    class="form-control"
+                                                    id="appointmentTime"
+                                                    name="startTime"
+                                                    required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Appointment Duration -->
+                                    <div class="mb-3">
+                                        <label for="durationSelect" class="form-label">Appointment Duration</label>
+                                        <select class="form-select" id="durationSelect" name="duration" required>
+                                            <option selected disabled>Select duration</option>
+                                            <option value="15">15 minutes</option>
+                                            <option value="30">30 minutes</option>
+                                            <option value="60">1 hour</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Clinic/Department -->
+                                    <div class="mb-3">
+                                        <label for="locationSelect" class="form-label">Clinic/Department</label>
+                                        <select class="form-select" id="locationSelect" name="department" required>
+                                            <option selected disabled>Select location</option>
+                                            <option value="General">General Clinic</option>
+                                            <option value="Pediatrics">Pediatrics Department</option>
+                                            <option value="Cardiology">Cardiology Department</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Appointment Type -->
+                                    <div class="mb-3">
+                                        <label for="appointmentType" class="form-label">Appointment Type</label>
+                                        <select class="form-select" id="appointmentType" name="type" required>
+                                            <option selected disabled>Select appointment type</option>
+                                            <option value="followup">Follow-up</option>
+                                            <option value="consultation">New Consultation</option>
+                                            <option value="labwork">Lab Work</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <button type="submit" class="btn btn-primary w-100" id="appointmentSubmit">
+                                        Schedule Appointment
+                                        <span id="appointmentLoader" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                                    </button>
+                                    <div id="appointmentError" class="text-danger text-center d-none"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Last Appointment Details -->
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Patient's Last Appointment Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Patient:</strong> Chibuike Martins</p>
+                                <p><strong>Doctor:</strong> Dr. John Smith</p>
+                                <p><strong>Doctor's Note:</strong> Follow-up in 2 weeks for further evaluation.</p>
+                                <p><strong>Treatment Status:</strong> Ongoing</p>
+                            </div>
+                        </div>
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Ongoing Appointment</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Doctor:</strong> Dr. John Smith</p>
+                                <p><strong>Ends In:</strong> 30 mins</p>
+                                <p><strong>Availability Status:</strong> Extend</p>
+                                <button class="btn btn-secondary btn-sm w-100">Check Availability</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col" th:if="${appointmentStatus == 1}">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Patient Vitals</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="/emr/new-vital" method="post" id="vitalsForm">
+                                <input type="hidden" name="appointmentId" value="1"> <!-- Add a hidden input for appointmentId -->
+                                <input type="hidden" name="regNo" value="12345"> <!-- Add a hidden input for regNo -->
+
+                                <!-- Blood Pressure -->
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="bloodPressure" class="form-label">Blood Pressure (mmHg)</label>
+                                        <input type="text" class="form-control" id="bloodPressure" name="bloodPressure" placeholder="e.g., 120/80" required>
+                                    </div>
+
+                                    <!-- Pulse Rate -->
+                                    <div class="col-md-6">
+                                        <label for="pulseRate" class="form-label">Pulse Rate (bpm)</label>
+                                        <input type="number" class="form-control" id="pulseRate" name="pulseRate" placeholder="e.g., 72">
+                                    </div>
+
+                                    <!-- Temperature -->
+                                    <div class="col-md-6">
+                                        <label for="temperature" class="form-label">Temperature (°C)</label>
+                                        <input type="number" step="0.01" class="form-control" id="temperature" name="temperature" placeholder="e.g., 36.6">
+                                    </div>
+
+                                    <!-- Respiratory Rate -->
+                                    <div class="col-md-6">
+                                        <label for="respiratoryRate" class="form-label">Respiratory Rate (breaths/min)</label>
+                                        <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate" placeholder="e.g., 16">
+                                    </div>
+
+                                    <!-- Oxygen Saturation -->
+                                    <div class="col-md-6">
+                                        <label for="oxygenSaturation" class="form-label">Oxygen Saturation (SpO2 %)</label>
+                                        <input type="number" step="0.01" class="form-control" id="oxygenSaturation" name="oxygenSaturation" placeholder="e.g., 98.5">
+                                    </div>
+
+                                    <!-- Special Notes -->
+                                    <div class="col-12">
+                                        <label for="specialNotes" class="form-label">Special Notes</label>
+                                        <textarea class="form-control" id="specialNotes" name="specialNotes" rows="3" placeholder="Add any additional notes"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-info w-100" id="vitalsSubmit">
+                                        Submit Vitals
+                                        <span id="vitalsLoader" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                                    </button>
+                                </div>
+                                <div id="vitalsError" class="text-danger text-center d-none"></div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+        </div>
+</div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function fetchDoctors() {
+            fetch("/emr/api/doctors")
+                .then(response => response.json())
+                .then(doctors => {
+                    const doctorSelect = document.getElementById("doctorSelect");
+                    doctorSelect.innerHTML = '<option selected disabled>Select a doctor</option>'; // Reset options
+
+                    doctors.forEach(doctor => {
+                        const option = document.createElement("option");
+                        option.value = doctor.id;
+                        option.textContent = `Dr. ${doctor.name} - ${doctor.specialization}`;
+                        doctorSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching doctors:", error));
+        }
+
+        // Call function on page load
+        fetchDoctors();
+    });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const appointmentForm = document.querySelector("#appointmentForm");
+    if (appointmentForm) {
+        appointmentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const submitButton = document.querySelector("#appointmentSubmit");
+            const loader = document.querySelector("#appointmentLoader");
+            const errorDisplay = document.querySelector("#appointmentError");
+
+            submitButton.disabled = true;
+            loader.classList.remove("d-none");
+            errorDisplay.classList.add("d-none");
+
+            fetch(appointmentForm.getAttribute("action"), {
+                method: "POST",
+                body: new FormData(appointmentForm),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                            errorDisplay.classList.add("d-none");
+                            alert("Appointment Created successfully, click ok to head back to the Dashboard, the Nurse would take it from here.");
+                            // Redirect to the dashboard after alert
+                            window.location.href = "/emr/dashboard/";
+                        }
+                         else {
+                        errorDisplay.textContent = data.error || "An error occurred.";
+                        errorDisplay.classList.remove("d-none");
+                    }
+                })
+                .catch(() => {
+                    errorDisplay.textContent = "Network error. Please try again.";
+                    errorDisplay.classList.remove("d-none");
+                })
+                .finally(() => {
+                    submitButton.disabled = false;
+                    loader.classList.add("d-none");
+                });
+        });
+    }
+
+
+    const vitalsForm = document.querySelector("#vitalsForm");
+    if (vitalsForm) {
+        vitalsForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const submitButton = document.querySelector("#vitalsSubmit");
+            const loader = document.querySelector("#vitalsLoader");
+            const errorDisplay = document.querySelector("#vitalsError");
+
+            submitButton.disabled = true;
+            loader.classList.remove("d-none");
+            errorDisplay.classList.add("d-none");
+
+            fetch(vitalsForm.getAttribute("action"), {
+                method: "POST",
+                body: new FormData(vitalsForm),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                            errorDisplay.classList.add("d-none");
+                            alert("Patient vitals added, patient can go see the doctor now");
+                            // Redirect to the dashboard after alert
+                            window.location.href = "/emr/dashboard/";
+                    } else {
+                        errorDisplay.textContent = data.error || "An error occurred";
+                        errorDisplay.classList.remove("d-none");
+                    }
+                })
+                .catch(() => {
+                    errorDisplay.textContent = "Network error. Please try again.";
+                    errorDisplay.classList.remove("d-none");
+                })
+                .finally(() => {
+                    submitButton.disabled = false;
+                    loader.classList.add("d-none");
+                });
+        });
+    }
+
+});
+
+</script>
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

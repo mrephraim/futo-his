@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'EDIT PATIENT INFO - EMR - FUTO HIS')"></head>
+<body>
+
+<div class="container my-5">
+    <div class="mb-5" th:insert="fragments :: headerOne(title='EDIT PATIENT - FUTO EMR')"></div>
+    <div th:if="${updateSession != null}">
+        <div class="text-danger" th:if="${#lists.size(updateSession.errors) > 0}">
+            <ul>
+                <li th:each="error : ${updateSession.errors}" th:text="${error}"></li>
+            </ul>
+        </div>
+
+        <div class="text-warning" th:if="${updateSession.updateStatus != null}">
+            <p th:text="${updateSession.updateStatus}"></p>
+        </div>
+    </div>
+
+
+    <div class="accordion accordion-success success" id="patientAccordion">
+
+        <!-- Patient Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPatient">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePatient" aria-expanded="false" aria-controls="collapsePatient">
+                    Patient Information
+                </button>
+            </h2>
+            <div id="collapsePatient" class="accordion-collapse collapse" aria-labelledby="headingPatient" data-bs-parent="#patientAccordion">
+                <div class="accordion-body">
+                    <form action="/emr/edit-patient/patient" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="display:none;">
+                                <label for="regNo" class="form-label">Registration Number</label>
+                                <input type="text" th:value="${patientData.patient.regNo}" class="form-control" id="regNo" name="regNo" >
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="surName" class="form-label">Surname</label>
+                                <input type="text" th:value="${patientData.patient.surName}" class="form-control" id="surName" name="surName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" th:value="${patientData.patient.firstName}" class="form-control" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="middleName" class="form-label">Middle Name</label>
+                                <input type="text" th:value="${patientData.patient.middleName}" class="form-control" id="middleName" name="middleName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="school" class="form-label">School</label>
+                                <input type="text" th:value="${patientData.patient.school}" class="form-control" id="school" name="school" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">Department</label>
+                                <input type="text" th:value="${patientData.patient.department}" class="form-control" id="department" name="department" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNo" class="form-label">Phone Number</label>
+                                <input type="tel" th:value="${patientData.patient.phoneNo}" class="form-control" id="phoneNo" name="phoneNo" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" th:value="${patientData.patient.email}" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="dob" class="form-label">Date of Birth</label>
+                                <input type="text" th:value="${patientData.patient.dob}" class="form-control" id="dob" name="dob" disabled>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sex" class="form-label">Sex</label>
+                                <select class="form-select" id="sex" name="sex" required>
+                                    <option value="">Select</option>
+                                    <option value="Male" th:selected="${patientData.patient.sex == 'Male'}">Male</option>
+                                    <option value="Female" th:selected="${patientData.patient.sex == 'Female'}">Female</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="maritalStatus" class="form-label">Marital Status</label>
+                                <select class="form-select" id="maritalStatus" name="maritalStatus" required>
+                                    <option value="">Select</option>
+                                    <option value="Single" th:selected="${patientData.patient.maritalStatus == 'Single'}">Single</option>
+                                    <option value="Married" th:selected="${patientData.patient.maritalStatus == 'Married'}">Married</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hostelAddress" class="form-label">Hostel Address</label>
+                                <input type="text" class="form-control" th:value="${patientData.patient.hostelAddress}"  id="hostelAddress" name="hostelAddress">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="homeTown" class="form-label">Home Town</label>
+                                <input type="text" class="form-control" th:value="${patientData.patient.homeTown}" id="homeTown" name="homeTown" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lga" class="form-label">Local Government Area</label>
+                                <input type="text" class="form-control" th:value="${patientData.patient.lga}" id="lga" name="lga" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="state" class="form-label">State</label>
+                                <input type="text" class="form-control" th:value="${patientData.patient.state}" id="state" name="state" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="country" class="form-label">Country</label>
+                                <input type="text" class="form-control" th:value="${patientData.patient.country}" id="country" name="country" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save Patient Information</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kin Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingKin">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKin" aria-expanded="false" aria-controls="collapseKin">
+                    Kin Information
+                </button>
+            </h2>
+            <div id="collapseKin" class="accordion-collapse collapse" aria-labelledby="headingKin" data-bs-parent="#patientAccordion">
+                <div class="accordion-body">
+                    <form action="/emr/edit-patient/kin" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="display:none;">
+                                <label for="regNoKin" class="form-label">Registration Number</label>
+                                <input type="text" class="form-control" id="regNoKin" name="regNo" th:value="${patientData.kin.regNo}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nameKin" class="form-label">Kin's Name</label>
+                                <input type="text" class="form-control" id="nameKin" name="name" th:value="${patientData.kin.name}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="kinPhone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="kinPhone" name="phoneNo" th:value="${patientData.kin.phoneNo}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="residentialAddressKin" class="form-label">Residential Address</label>
+                                <input type="text" class="form-control" id="residentialAddressKin" name="residentialAddress" th:value="${patientData.kin.residentialAddress}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="occupationKin" class="form-label">Occupation</label>
+                                <input type="text" class="form-control" id="occupationKin" name="occupation" th:value="${patientData.kin.occupation}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="relationToStudent" class="form-label">Relation to Student</label>
+                                <input type="text" class="form-control" id="relationToStudent" name="relationToStudent" th:value="${patientData.kin.relationToStudent}" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save Kin Information</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Guardian Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingGuardian">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuardian" aria-expanded="false" aria-controls="collapseGuardian">
+                    Guardian Information
+                </button>
+            </h2>
+            <div id="collapseGuardian" class="accordion-collapse collapse" aria-labelledby="headingGuardian" data-bs-parent="#patientAccordion">
+                <div class="accordion-body">
+                    <form action="/emr/edit-patient/guardian" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="display:none;">
+                                <label for="regNoGuardian" class="form-label">Registration Number</label>
+                                <input type="text" class="form-control" id="regNoGuardian" name="regNo" th:value="${patientData.guardian.regNo}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nameGuardian" class="form-label">Guardian's Name</label>
+                                <input type="text" class="form-control" id="nameGuardian" name="name" th:value="${patientData.guardian.name}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNoGuardian" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="phoneNoGuardian" name="phoneNo" th:value="${patientData.guardian.phoneNo}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="officeAddressGuardian" class="form-label">Office Address</label>
+                                <input type="text" class="form-control" id="officeAddressGuardian" name="officeAddress" th:value="${patientData.guardian.officeAddress}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="residentialAddressGuardian" class="form-label">Residential Address</label>
+                                <input type="text" class="form-control" id="residentialAddressGuardian" name="residentialAddress" th:value="${patientData.guardian.residentialAddress}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="occupationGuardian" class="form-label">Occupation</label>
+                                <input type="text" class="form-control" id="occupationGuardian" name="occupation" th:value="${patientData.guardian.occupation}" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save Guardian Information</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Medical History Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMedicalHistory">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMedicalHistory" aria-expanded="false" aria-controls="collapseMedicalHistory">
+                    Medical History Information
+                </button>
+            </h2>
+            <div id="collapseMedicalHistory" class="accordion-collapse collapse" aria-labelledby="headingMedicalHistory" data-bs-parent="#patientAccordion">
+                <div class="accordion-body">
+                    <form action="/emr/edit-patient/medical-history" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="display:none;">
+                                <label for="regNoMedicalHistory" class="form-label">Registration Number</label>
+                                <input type="text" class="form-control" id="regNoMedicalHistory" name="regNo" th:value="${patientData.medicalHistory.regNo}" >
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="previousIllness" class="form-label">Previous Illness/ Surgery History</label>
+                                <textarea class="form-control" id="previousIllness" name="previousIllness" rows="2" th:text="${patientData.medicalHistory.previousIllness}" required></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="familyHistory" class="form-label">Family History</label>
+                                <textarea class="form-control" id="familyHistory" name="familyHistory" rows="2" th:text="${patientData.medicalHistory.familyHistory}" required></textarea>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="height" class="form-label">Height</label>
+                                <input type="number" step="0.01" class="form-control" id="height" name="height" th:value="${patientData.medicalHistory.height}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="weight" class="form-label">Weight</label>
+                                <input type="number" step="0.1" class="form-control" id="weight" name="weight" th:value="${patientData.medicalHistory.weight}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="visualAcuity" class="form-label">Visual Acuity</label>
+                                <input type="text" class="form-control" id="visualAcuity" name="visualAcuity" th:value="${patientData.medicalHistory.visualAcuity}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cardiovascularHealth" class="form-label">Cardiovascular Health</label>
+                                <input type="text" class="form-control" id="cardiovascularHealth" name="cardiovascularHealth" th:value="${patientData.medicalHistory.cardiovascularHealth}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hearingCondition" class="form-label">Hearing Condition</label>
+                                <input type="text" class="form-control" id="hearingCondition" name="hearingCondition" th:value="${patientData.medicalHistory.hearingCondition}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="abdominalHealth" class="form-label">Abdominal Health</label>
+                                <input type="text" class="form-control" id="abdominalHealth" name="abdominalHealth" th:value="${patientData.medicalHistory.abdominalHealth}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="respiratoryHealth" class="form-label">Respiratory Health</label>
+                                <input type="text" class="form-control" id="respiratoryHealth" name="respiratoryHealth" th:value="${patientData.medicalHistory.respiratoryHealth}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="extremities" class="form-label">Extremities</label>
+                                <input type="text" class="form-control" id="extremities" name="extremities" th:value="${patientData.medicalHistory.extremities}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="psychiatricState" class="form-label">Psychiatric State</label>
+                                <input type="text" class="form-control" id="psychiatricState" name="psychiatricState" th:value="${patientData.medicalHistory.psychiatricState}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="genotype" class="form-label">Genotype</label>
+                                <select class="form-select" id="genotype" name="genotype" required>
+                                    <option value="">Select genotype</option>
+                                    <option value="AA" th:selected="${patientData.medicalHistory.genotype == 'AA'}">AA</option>
+                                    <option value="AS" th:selected="${patientData.medicalHistory.genotype == 'AS'}">AS</option>
+                                    <option value="SS" th:selected="${patientData.medicalHistory.genotype == 'SS'}">SS</option>
+                                    <option value="AC" th:selected="${patientData.medicalHistory.genotype == 'AC'}">AC</option>
+                                    <option value="SC" th:selected="${patientData.medicalHistory.genotype == 'SC'}">SC</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="bloodGroup" class="form-label">Blood Group</label>
+                                <select class="form-select" id="bloodGroup" name="bloodGroup" required>
+                                    <option value="">Select blood group</option>
+                                    <option value="A+" th:selected="${patientData.medicalHistory.bloodGroup == 'A+'}">A+</option>
+                                    <option value="A-" th:selected="${patientData.medicalHistory.bloodGroup == 'A-'}">A-</option>
+                                    <option value="B+" th:selected="${patientData.medicalHistory.bloodGroup == 'B+'}">B+</option>
+                                    <option value="B-" th:selected="${patientData.medicalHistory.bloodGroup == 'B-'}">B-</option>
+                                    <option value="AB+" th:selected="${patientData.medicalHistory.bloodGroup == 'AB+'}">AB+</option>
+                                    <option value="AB-" th:selected="${patientData.medicalHistory.bloodGroup == 'AB-'}">AB-</option>
+                                    <option value="O+" th:selected="${patientData.medicalHistory.bloodGroup == 'O+'}">O+</option>
+                                    <option value="O-" th:selected="${patientData.medicalHistory.bloodGroup == 'O-'}">O-</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="chestXray" class="form-label">Chest X-ray</label>
+                                <input type="text" class="form-control" id="chestXray" name="chestXray" th:value="${patientData.medicalHistory.chestXray}" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save Medical History</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="d-flex justify-content-end mt-3 mb-3">
+        <a href="/emr/dashboard/" class="btn btn-secondary me-3">Go Back</a>
+    </div>
+
+</div>
+
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

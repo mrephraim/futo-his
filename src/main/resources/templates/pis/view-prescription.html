@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:insert="fragments :: head(title = 'View Prescription - PIS Admin Portal - FUTO HIS')"></head>
+<style>
+    .page-container {
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 20px;
+        border: 4px double #000; /* double border */
+        background: #fff;
+    }
+    .page-header {
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .badge-status {
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #b9c0c9;
+    }
+</style>
+<body>
+
+<div class="mb-1" th:insert="fragments :: headerOne(title='Prescription Slip - FUTO PIS')"></div>
+
+<div class="page-container shadow-lg border border-3 rounded-3 p-4">
+    <!-- Header -->
+    <div id="prescriptionHeader" class="page-header d-flex justify-content-between align-items-center">
+        <!-- Filled by JS -->
+    </div>
+
+    <!-- Content -->
+    <div class="row g-4 mt-3">
+        <!-- Patient Info -->
+        <div class="col-md-6">
+            <div id="patientInfo" class="border rounded p-3">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Prescription Info -->
+        <div class="col-md-6">
+            <div id="prescriptionInfo" class="border rounded p-3">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Medications -->
+    <h6 class="mb-3"><i class="bi bi-link-45deg"></i> Prescribed Medications</h6>
+    <div id="medicationsContainer" class="row g-3">
+        <!-- Filled by JS -->
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="#" onclick="history.back(); return false;" class="btn btn-secondary">Back</a>
+        <button id="dispenseBtn" type="button" class="btn btn-dark" onclick="dispensePrescription()">Proceed to Dispense</button>
+        <button type="button" class="btn btn-light" onclick="window.print()">Print Prescription</button>
+    </div>
+</div>
+<!-- Bootstrap JS -->
+<div th:insert="fragments :: footer"></div>
+<script>
+    // Get prescriptionId from ?id=
+    const urlParams = new URLSearchParams(window.location.search);
+    const prescriptionId = urlParams.get("id");
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat("en-NG", {
+            style: "currency",
+            currency: "NGN",
+            minimumFractionDigits: 2
+        }).format(value);
+    }
+
+    function loadPrescriptionDetails() {
+        if (!prescriptionId) {
+            document.querySelector(".page-container").innerHTML =
+                `<div class="alert alert-danger">❌ No prescription ID provided.</div>`;
+            return;
+        }
+
+        fetch("/pis/prescriptions/details", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prescriptionId: parseInt(prescriptionId) })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    document.querySelector(".page-container").innerHTML =
+                        `<div class="alert alert-danger">❌ ${data.message}</div>`;
+                    return;
+                }
+
+                const p = data.data;
+
+                // Hide dispense button if not PRESCRIBED
+                if (p.status !== "PRESCRIBED") {
+                    document.getElementById("dispenseBtn").style.display = "none";
+                }
+
+                // Header
+                document.getElementById("prescriptionHeader").innerHTML = `
+                    <div>
+                        <h5 class="mb-0">Prescription Details - RX${p.id}</h5>
+                        <span class="badge-status">${p.status}</span>
+                        <small class="text-muted ms-2">• Doctor: ${p.prescriber.name}</small>
+                    </div>
+                    <div class="text-end">
+                        <h6 class="mb-0">${formatCurrency(p.totalCost)}</h6>
+                        <small class="text-muted">Total Amount</small>
+                    </div>
+                `;
+
+                // Patient Info
+                fetch(`/pis/prescriptions/patient/${p.patientId}`)
+                    .then(res => res.json())
+                    .then(patientData => {
+                        if (patientData.success && patientData.data) {
+                            const pt = patientData.data;
+                            document.getElementById("patientInfo").innerHTML = `
+                                <h6 class="mb-3">Patient Information</h6>
+                                <p><strong>Reg No:</strong> ${p.patientId}</p>
+                                <p><strong>Name:</strong> ${pt.fullName}</p>
+                                <p><strong>School:</strong> ${pt.school}</p>
+                                <p><strong>Department:</strong> ${pt.department}</p>
+                                <p><strong>Email:</strong> ${pt.email}</p>
+                            `;
+                        } else {
+                            document.getElementById("patientInfo").innerHTML = `
+                                <h6 class="mb-3">Patient Information</h6>
+                                <div class="alert alert-warning">⚠️ ${patientData.error || "No patient details found"}</div>
+                            `;
+                        }
+                    })
+                    .catch(err => {
+                        document.getElementById("patientInfo").innerHTML = `
+                            <h6 class="mb-3">Patient Information</h6>
+                            <div class="alert alert-danger">❌ Error fetching patient details: ${err.message}</div>
+                        `;
+                    });
+
+
+                // Prescription Info
+                document.getElementById("prescriptionInfo").innerHTML = `
+                    <h6 class="mb-3">Prescription Details</h6>
+                    <p><strong>Prescribed Date:</strong> ${new Date(p.prescribedAt).toLocaleDateString()}</p>
+                    <p><strong>Prescribing Doctor:</strong> ${p.prescriber.name}</p>
+                `;
+
+                // Medications
+                const medsHtml = p.medications.map((med, idx) => `
+                    <div class="col-12">
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">${med.drugName}</h6>
+                                    <p class="mb-1"><strong>Dosage Instructions:</strong> <b>(x${med.dosageQuantity})</b> ${med.packageName}, ${med.intakeIntervalText}</p>
+                                    <p class="mb-1"><strong>Duration:</strong> ${med.durationValue} ${med.durationUnitText}</p>
+                                    ${med.instruction ? `<p class="mb-1"><strong>Instruction:</strong> ${med.instruction}</p>` : ""}
+                                    <p class="mb-1 text-success"><strong>Cost:</strong> ${formatCurrency(med.cost)}</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-secondary">Item ${idx + 1}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join("");
+
+                document.getElementById("medicationsContainer").innerHTML = medsHtml;
+            })
+            .catch(err => {
+                document.querySelector(".page-container").innerHTML =
+                    `<div class="alert alert-danger">❌ Error loading prescription: ${err.message}</div>`;
+            });
+    }
+    function dispensePrescription() {
+        if (!prescriptionId) {
+                alert("❌ No prescription ID found in URL.");
+                return;
+            }
+          if (!confirm(`Are you sure you want to dispense prescription RX${prescriptionId}?`)) {
+            return;
+          }
+
+          fetch("/pis/prescriptions/dispense", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prescriptionId })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message);
+                loadPrescriptionDetails(); // reload list after success
+              } else {
+                alert("❌ " + data.message);
+              }
+            })
+            .catch(err => {
+              alert("❌ Error dispensing: " + err.message);
+            });
+    }
+    // Load data
+    loadPrescriptionDetails();
+</script>
+
+
+</body>
+</html>

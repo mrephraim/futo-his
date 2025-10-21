@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Head Fragment-->
+<head th:insert="fragments :: head(title = 'Prescription Orders - PIS Admin Portal - FUTO HIS')"></head>
+<style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .prescription-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    }
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .btn-dark {
+      border-radius: 8px;
+    }
+</style>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="mb-5" th:insert="fragments :: headerOne(title='Prescriptions - FUTO PIS')"></div>
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold">Prescription Queue</h3>
+                    <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#prescriptionModal">
+                        <i class="bi bi-plus"></i> New Prescription
+                    </button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" placeholder="">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="dropdown">
+                            <button id="filterButton" class="btn btn-outline-secondary w-100 dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                Filter by All
+                            </button>
+                            <ul class="dropdown-menu w-100">
+                                <li><a class="dropdown-item filter-option" data-status="ALL" href="#">All</a></li>
+                                <li><a class="dropdown-item filter-option" data-status="PRESCRIBED" href="#">Prescribed</a></li>
+                                <li><a class="dropdown-item filter-option" data-status="ONGOING" href="#">Ongoing</a></li>
+                                <li><a class="dropdown-item filter-option" data-status="COMPLETED" href="#">Completed</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="prescriptionsContainer"></div>
+            </div>
+
+</div>
+        <div class="modal fade" id="prescriptionModal" tabindex="-1" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="prescriptionModalLabel">Create New Prescription</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+
+                        <!-- Patient Info -->
+                        <div class="mb-3">
+                            <label class="form-label">Patient Information</label>
+                            <input type="text" id="patientInfo" class="form-control" placeholder="Enter registration number and hit enter">
+                        </div>
+
+                        <!-- Loader -->
+                        <div id="patientLoader" class="text-center mb-3 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Patient Details -->
+                        <div id="patientDetails"
+                             class="border rounded p-3 mb-3 d-none position-relative"
+                             style="max-height: 50vh; overflow-y: auto;">
+
+                            <!-- Remove button -->
+                            <button type="button" id="removePatientBtn"
+                                    class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+
+                            <h6 class="mb-3">Patient Details</h6>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <p><strong>Name:</strong> <span id="pdName"></span></p>
+                                    <p><strong>DOB:</strong> <span id="pdDob"></span></p>
+                                    <p><strong>Sex:</strong> <span id="pdSex"></span></p>
+                                    <p><strong>School:</strong> <span id="pdSchool"></span></p>
+                                    <p><strong>Department:</strong> <span id="pdDepartment"></span></p>
+                                    <p><strong>Phone:</strong> <span id="pdPhone"></span></p>
+                                </div>
+                                <div class="col-6">
+                                    <p><strong>Email:</strong> <span id="pdEmail"></span></p>
+                                    <p><strong>Weight:</strong> <span id="pdWeight"></span></p>
+                                    <p><strong>Height:</strong> <span id="pdHeight"></span></p>
+                                    <p><strong>Blood Group:</strong> <span id="pdBloodGroup"></span></p>
+                                    <p><strong>Genotype:</strong> <span id="pdGenotype"></span></p>
+                                    <p><strong>Allergies:</strong> <span id="pdAllergies"></span></p>
+                                    <p><strong>Previous Illness:</strong> <span id="pdIllness"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Error -->
+                        <div id="patientError" class="alert alert-danger d-none"></div>
+
+                        <!-- Hidden input for prescriberId -->
+                        <input type="hidden" id="prescriberId" th:value="${userId}">
+
+                        <!-- Medications Section -->
+                        <h6 class="mb-3">Medications</h6>
+                        <div id="medicationsContainer">
+                            <div class="medication-row border rounded p-3 mb-3 position-relative">
+                                <!-- Remove button -->
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-medication-btn">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+
+                                <div class="row g-3">
+                                    <!-- Drug Dropdown -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Drug</label>
+                                        <select class="form-select drug-select">
+                                            <option value="">-- Select Drug --</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Dosage -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Dosage</label>
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <input type="number" class="form-control dosage-value" placeholder="e.g., 1">
+                                            </div>
+                                            <div class="col-8">
+                                                <select class="form-select dosage-unit">
+                                                    <option value="">-- Select Unit --</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <select class="form-select frequency">
+                                                    <option value="1">Once daily</option>
+                                                    <option value="2">Twice daily</option>
+                                                    <option value="4">Every 6 hours</option>
+                                                    <option value="3">Every 8 hours</option>
+                                                    <option value="2">Every 12 hours</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Duration -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Duration</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control duration-value" placeholder="e.g., 10">
+                                            <select class="form-select duration-unit">
+                                                <option value="1">Days</option>
+                                                <option value="7">Weeks</option>
+                                                <option value="30">Months</option>
+                                                <option value="365">Years</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Instructions -->
+                                    <div class="col-md-12">
+                                        <label class="form-label">Instructions</label>
+                                        <textarea class="form-control instructions" placeholder="Enter additional instructions"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Medication Button -->
+                        <button type="button" class="btn btn-outline-primary" id="addMedicationBtn">
+                            + Add Medication
+                        </button>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="createPrescriptionBtn">Create Prescription</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+<div th:insert="fragments :: footer"></div></div>
+<script src="/static/add-prescription.js"></script>
+<script>
+        // Utility: format date
+        function formatDate(dateStr) {
+          const d = new Date(dateStr);
+          return d.toLocaleDateString();
+        }
+
+        // Map status to badge class
+        function statusBadgeClass(status) {
+          switch (status) {
+            case "PRESCRIBED": return "bg-warning text-dark";
+            case "ONGOING": return "bg-primary";
+            case "COMPLETED": return "bg-success";
+            default: return "bg-secondary";
+          }
+        }
+
+        // Handle dispense action
+        function dispensePrescription(prescriptionId) {
+          if (!confirm(`Are you sure you want to dispense prescription RX${prescriptionId}?`)) {
+            return;
+          }
+
+          fetch("/pis/prescriptions/dispense", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prescriptionId })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message);
+                fetchPrescriptions(); // reload list after success
+              } else {
+                alert("❌ " + data.message);
+              }
+            })
+            .catch(err => {
+              alert("❌ Error dispensing: " + err.message);
+            });
+        }
+
+        // Render prescriptions
+        function renderPrescriptions(prescriptions) {
+          const container = document.getElementById("prescriptionsContainer");
+          container.innerHTML = "";
+
+          if (!prescriptions || prescriptions.length === 0) {
+            container.innerHTML = `<div class="alert alert-info">No prescriptions found.</div>`;
+            return;
+          }
+
+          prescriptions.forEach(p => {
+            const medsHtml = p.medications.map(med => `
+              <div class="mb-2">
+                <p class="mb-0">
+                  <strong>${med.drugName}</strong> –
+                  <b>(x${med.dosageQuantity})</b> ${med.packageName},
+                  ${med.intakeIntervalText} for
+                  ${med.durationValue} ${med.durationUnitText}
+                </p>
+                ${med.instruction ? `<small class="text-muted">Instruction: ${med.instruction}</small>` : ""}
+              </div>
+            `).join("");
+
+            // Only show dispense button if status is PRESCRIBED
+            const dispenseButton = p.status === "PRESCRIBED" ? `
+              <button class="btn btn-dark" onclick="dispensePrescription(${p.id})">
+                Dispense
+              </button>` : "";
+
+            const card = `
+              <div class="prescription-card p-3 mb-3 border rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="fw-bold mb-0">
+                    Prescription RX${p.id}
+                    <span class="badge ${statusBadgeClass(p.status)} status-badge">
+                      ${p.status}
+                    </span>
+                  </h5>
+                </div>
+                <p class="mb-1"><strong>Patient:</strong> ${p.patientId}</p>
+                <p class="mb-1"><strong>Doctor:</strong> ${p.prescriber.name}</p>
+                <p class="mb-3"><strong>Date:</strong> ${formatDate(p.prescribedAt)}</p>
+
+                <div class="mb-3">
+                  <p class="fw-bold mb-1">Medications</p>
+                  ${medsHtml}
+                </div>
+
+                <div class="d-flex gap-2">
+                  <a class="btn btn-outline-secondary" href="/pis/prescriptions/view?id=${p.id}">View Details</a>
+                  ${dispenseButton}
+                </div>
+              </div>
+            `;
+            container.innerHTML += card;
+          });
+        }
+
+
+        // Fetch prescriptions by status
+        function fetchPrescriptions(status = "ALL") {
+          fetch(`/pis/prescriptions/fetch?status=${status}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                renderPrescriptions(data.data);
+              } else {
+                document.getElementById("prescriptionsContainer").innerHTML =
+                  `<div class="alert alert-danger">${data.message}</div>`;
+              }
+            })
+            .catch(err => {
+              document.getElementById("prescriptionsContainer").innerHTML =
+                `<div class="alert alert-danger">Error fetching data: ${err.message}</div>`;
+            });
+        }
+
+        // Filter dropdown click handler
+        document.querySelectorAll(".filter-option").forEach(item => {
+          item.addEventListener("click", e => {
+            e.preventDefault();
+            const status = e.target.dataset.status;
+            document.getElementById("filterButton").textContent = `Filter by ${e.target.textContent}`;
+            fetchPrescriptions(status);
+          });
+        });
+
+        // Initial load: check ?status= param
+        document.addEventListener("DOMContentLoaded", () => {
+          const params = new URLSearchParams(window.location.search);
+          const status = params.get("status") || "ALL";
+          fetchPrescriptions(status);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: folderHead(title = 'View Appointment')">
+</head>
+<body>
+
+<div th:insert="fragments :: sidebar"></div>
+<div class="content">
+    <div class="container py-4">
+        <h2>Appointment Details</h2>
+
+        <!-- Vitals Section -->
+        <div class="card">
+            <div class="card-body">
+                <h5>Vitals</h5>
+                <p><strong>Blood Pressure:</strong> <span id="bloodPressure"></span></p>
+                <p><strong>Pulse Rate:</strong> <span id="pulseRate"></span></p>
+                <p><strong>Temperature:</strong> <span id="temperature"></span></p>
+                <p><strong>Respiratory Rate:</strong> <span id="respiratoryRate"></span></p>
+                <p><strong>Oxygen Saturation:</strong> <span id="oxygenSaturation"></span></p>
+                <p><strong>Special Notes:</strong> <span id="specialNotes"></span></p>
+            </div>
+        </div>
+
+        <div id="labOrdersSection" class="mt-3">
+            <h5><span>Lab Test Orders</span> <button class="btn btn-outline-dark" onclick="openLabOrderForm()"><i class="bi bi-plus-circle"></i></button></h5>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Priority</th>
+                    <th>Comment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="labOrdersBody"></tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5>Appointment Prescriptions</h5>
+            <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#prescriptionModal">
+                <i class="bi bi-plus"></i> New Prescription
+            </button>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <input type="text" class="form-control" placeholder="">
+            </div>
+            <div class="col-md-4">
+                <div class="dropdown">
+                    <button id="filterButton" class="btn btn-outline-secondary w-100 dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown">
+                        Filter by All
+                    </button>
+                    <ul class="dropdown-menu w-100">
+                        <li><a class="dropdown-item filter-option" data-status="ALL" href="#">All</a></li>
+                        <li><a class="dropdown-item filter-option" data-status="PRESCRIBED" href="#">Prescribed</a></li>
+                        <li><a class="dropdown-item filter-option" data-status="ONGOING" href="#">Ongoing</a></li>
+                        <li><a class="dropdown-item filter-option" data-status="COMPLETED" href="#">Completed</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="prescriptionsContainer"></div>
+        <!-- Doctor's Notes -->
+        <div class="mt-3">
+            <h5>Doctor's Notes</h5>
+            <textarea id="doctorNotes" class="form-control" rows="5" placeholder="Enter notes here..."></textarea>
+        </div>
+
+
+
+        <div class="row mt-3">
+            <div class="col-2">
+            <button class="btn btn-secondary" style="width:90%;">Save Progress</button>
+            </div>
+            <div class="col-3">
+            <button class="btn btn-success" style="width:90%;">Finish Appointment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lab Order Modal -->
+<div id="labOrderModal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Lab Test Order</h5>
+                <button type="button" class="close btn-close" onclick="closeLabOrderForm()" ></button>
+            </div>
+            <div class="modal-body">
+                <form id="labOrderForm">
+                    <div class="mb-3">
+                        <label for="testCategory" class="form-label">Test Category:</label>
+                        <select id="testCategory" class="form-select" onchange="fetchTests()" required></select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="testType" class="form-label">Test Type:</label>
+                        <select id="testType" class="form-select" required></select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority:</label>
+                        <select id="priority" class="form-select" required>
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="testComment" class="form-label">Comments:</label>
+                        <textarea id="testComment" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeLabOrderForm()">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="prescriptionModal" tabindex="-1" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="prescriptionModalLabel">Create New Prescription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Patient Info -->
+                <div class="mb-3">
+                    <label class="form-label">Patient Information</label>
+                    <input type="text" id="patientInfo" class="form-control" placeholder="Enter registration number and hit enter">
+                </div>
+
+                <!-- Loader -->
+                <div id="patientLoader" class="text-center mb-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Patient Details -->
+                <div id="patientDetails"
+                     class="border rounded p-3 mb-3 d-none position-relative"
+                     style="max-height: 50vh; overflow-y: auto;">
+
+                    <!-- Remove button -->
+                    <button type="button" id="removePatientBtn"
+                            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+
+                    <h6 class="mb-3">Patient Details</h6>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>Name:</strong> <span id="pdName"></span></p>
+                            <p><strong>DOB:</strong> <span id="pdDob"></span></p>
+                            <p><strong>Sex:</strong> <span id="pdSex"></span></p>
+                            <p><strong>School:</strong> <span id="pdSchool"></span></p>
+                            <p><strong>Department:</strong> <span id="pdDepartment"></span></p>
+                            <p><strong>Phone:</strong> <span id="pdPhone"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Email:</strong> <span id="pdEmail"></span></p>
+                            <p><strong>Weight:</strong> <span id="pdWeight"></span></p>
+                            <p><strong>Height:</strong> <span id="pdHeight"></span></p>
+                            <p><strong>Blood Group:</strong> <span id="pdBloodGroup"></span></p>
+                            <p><strong>Genotype:</strong> <span id="pdGenotype"></span></p>
+                            <p><strong>Allergies:</strong> <span id="pdAllergies"></span></p>
+                            <p><strong>Previous Illness:</strong> <span id="pdIllness"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Error -->
+                <div id="patientError" class="alert alert-danger d-none"></div>
+
+                <!-- Hidden input for prescriberId -->
+                <input type="hidden" id="prescriberId" th:value="${userId}">
+                <input type="hidden" id="prescriberDept" th:value="EMR">
+
+                <!-- Medications Section -->
+                <h6 class="mb-3">Medications</h6>
+                <div id="medicationsContainer">
+                    <div class="medication-row border rounded p-3 mb-3 position-relative">
+                        <!-- Remove button -->
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-medication-btn">
+                            <i class="bi bi-trash"></i>
+                        </button>
+
+                        <div class="row g-3">
+                            <!-- Drug Dropdown -->
+                            <div class="col-md-4">
+                                <label class="form-label">Drug</label>
+                                <select class="form-select drug-select">
+                                    <option value="">-- Select Drug --</option>
+                                </select>
+                            </div>
+
+                            <!-- Dosage -->
+                            <div class="col-md-4">
+                                <label class="form-label">Dosage</label>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <input type="number" class="form-control dosage-value" placeholder="e.g., 1">
+                                    </div>
+                                    <div class="col-8">
+                                        <select class="form-select dosage-unit">
+                                            <option value="">-- Select Unit --</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <select class="form-select frequency">
+                                            <option value="1">Once daily</option>
+                                            <option value="2">Twice daily</option>
+                                            <option value="4">Every 6 hours</option>
+                                            <option value="3">Every 8 hours</option>
+                                            <option value="2">Every 12 hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="col-md-4">
+                                <label class="form-label">Duration</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control duration-value" placeholder="e.g., 10">
+                                    <select class="form-select duration-unit">
+                                        <option value="1">Days</option>
+                                        <option value="7">Weeks</option>
+                                        <option value="30">Months</option>
+                                        <option value="365">Years</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Instructions -->
+                            <div class="col-md-12">
+                                <label class="form-label">Instructions</label>
+                                <textarea class="form-control instructions" placeholder="Enter additional instructions"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Medication Button -->
+                <button type="button" class="btn btn-outline-primary" id="addMedicationBtn">
+                    + Add Medication
+                </button>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createPrescriptionBtn">Create Prescription</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div th:insert="fragments :: folderFooter"></div>
+
+<script>
+    const appointmentId = new URLSearchParams(window.location.search).get('id');
+
+    function fetchVitals() {
+        fetch(`/emr/api/vitals/${appointmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("bloodPressure").textContent = data.bloodPressure;
+                document.getElementById("pulseRate").textContent = data.pulseRate;
+                document.getElementById("temperature").textContent = data.temperature;
+                document.getElementById("respiratoryRate").textContent = data.respiratoryRate;
+                document.getElementById("oxygenSaturation").textContent = data.oxygenSaturation;
+                document.getElementById("specialNotes").textContent = data.specialNotes;
+            });
+    }
+
+    function fetchCategories() {
+        fetch(`/emr/api/lab-categories`)
+            .then(response => response.json())
+            .then(data => {
+                const categorySelect = document.getElementById("testCategory");
+                categorySelect.innerHTML = "<option value=''>Select Category</option>";
+                data.forEach(category => {
+                    categorySelect.innerHTML += `<option value="${category.id}">${category.name}</option>`;
+                });
+            });
+    }
+
+    function fetchTests() {
+        const categoryId = document.getElementById("testCategory").value;
+        fetch(`/emr/api/lab-tests/${categoryId}`)
+            .then(response => response.json())
+            .then(data => {
+                const testSelect = document.getElementById("testType");
+                testSelect.innerHTML = "<option value=''>Select Test</option>";
+                data.forEach(test => {
+                    testSelect.innerHTML += `<option value="${test.id}">${test.name}</option>`;
+                });
+            });
+    }
+
+    fetchVitals();
+    fetchCategories();
+
+    function openLabOrderForm() {
+        // Example: Open a modal popup for lab order
+        let modal = document.getElementById("labOrderModal");
+        if (modal) {
+            modal.style.display = "block";
+        } else {
+            console.error("Lab Order Modal not found");
+        }
+    }
+
+    function closeLabOrderForm() {
+    const modal = document.getElementById("labOrderModal");
+    modal.style.display = "none";
+}
+
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetchLabOrders(); // Load lab orders when the page loads
+    });
+
+    function fetchLabOrders() {
+        const appointmentId = new URLSearchParams(window.location.search).get("id"); // Get appointment ID from URL
+        if (!appointmentId) return;
+
+        fetch(`/emr/api/lab-orders/${appointmentId}`)
+            .then(response => response.json())
+            .then(labOrders => {
+                const labOrdersBody = document.getElementById("labOrdersBody");
+                labOrdersBody.innerHTML = ""; // Clear previous data
+
+                if (labOrders.length > 0) {
+                    document.getElementById("labOrdersSection").style.display = "block"; // Show section
+
+                    labOrders.forEach(order => {
+                        const viewResultButton = order.requisitionId
+                            ? `<a href="/lis/result-printout/${order.requisitionId}" class="btn btn-success btn-sm">View Result</a>`
+                            : ""; // Only show if requisitionId exists
+
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${order.testType}</td>
+                            <td>${order.priority}</td>
+                            <td>${order.comment ? order.comment : "N/A"}</td>
+                            <td>${order.status}</td>
+                            <td>${viewResultButton}</td> <!-- Show button only if requisitionId exists -->
+                        `;
+                        labOrdersBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => console.error("Error fetching lab orders:", error));
+    }
+</script>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("labOrderForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const appointmentId = new URLSearchParams(window.location.search).get("id"); // Get appointment ID from URL
+            const testCategory = document.getElementById("testCategory").value;
+            const testType = document.getElementById("testType").value;
+            const priority = document.getElementById("priority").value;
+            const comment = document.getElementById("testComment").value;
+
+            if (!testCategory || !testType || !priority) {
+                alert("Please fill all required fields!");
+                return;
+            }
+
+            const labOrderData = {
+                appointmentId: parseInt(appointmentId),
+                testCategory: parseInt(testCategory),
+                testType: parseInt(testType),
+                priority: priority,
+                comment: comment.trim()
+            };
+
+            fetch("/emr/api/lab-orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(labOrderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show success message
+                document.getElementById("labOrderForm").reset(); // Clear form
+                window.reload();
+            })
+            .catch(error => console.error("Error placing lab order:", error));
+        });
+    });
+</script>
+<script>
+    // Utility: format date
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString();
+    }
+
+    // Map status to badge class
+    function statusBadgeClass(status) {
+      switch (status) {
+        case "PRESCRIBED": return "bg-warning text-dark";
+        case "ONGOING": return "bg-primary";
+        case "COMPLETED": return "bg-success";
+        default: return "bg-secondary";
+      }
+    }
+
+    // Handle dispense action
+    function dispensePrescription(prescriptionId) {
+      if (!confirm(`Are you sure you want to dispense prescription RX${prescriptionId}?`)) {
+        return;
+      }
+
+      fetch("/pis/prescriptions/dispense", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prescriptionId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            fetchPrescriptions(); // reload list after success
+          } else {
+            alert("❌ " + data.message);
+          }
+        })
+        .catch(err => {
+          alert("❌ Error dispensing: " + err.message);
+        });
+    }
+
+    // Render prescriptions
+    function renderPrescriptions(prescriptions) {
+      const container = document.getElementById("prescriptionsContainer");
+      container.innerHTML = "";
+
+      if (!prescriptions || prescriptions.length === 0) {
+        container.innerHTML = `<div class="alert alert-info">No prescriptions found.</div>`;
+        return;
+      }
+
+      prescriptions.forEach(p => {
+        const medsHtml = p.medications.map(med => `
+          <div class="mb-2">
+            <p class="mb-0">
+              <strong>${med.drugName}</strong> –
+              <b>(x${med.dosageQuantity})</b> ${med.packageName},
+              ${med.intakeIntervalText} for
+              ${med.durationValue} ${med.durationUnitText}
+            </p>
+            ${med.instruction ? `<small class="text-muted">Instruction: ${med.instruction}</small>` : ""}
+          </div>
+        `).join("");
+
+     const card = `
+      <div class="col-md-6">
+        <div class="prescription-card p-3 mb-3 border rounded h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">
+              Prescription RX${p.id}
+              <span class="badge ${statusBadgeClass(p.status)} status-badge">
+                ${p.status}
+              </span>
+            </h5>
+          </div>
+          <p class="mb-1"><strong>Patient:</strong> ${p.patientId}</p>
+          <p class="mb-1"><strong>Doctor:</strong> ${p.prescriber.name}</p>
+          <p class="mb-3"><strong>Date:</strong> ${formatDate(p.prescribedAt)}</p>
+
+          <div class="mb-3">
+            <p class="fw-bold mb-1">Medications</p>
+            ${medsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+    container.innerHTML += card;
+
+      });
+    }
+
+    // Fetch prescriptions by status + appointmentId
+    function fetchPrescriptions(status = "ALL", appointmentId) {
+      fetch(`/pis/prescriptions/fetch?status=${status}&appointmentId=${appointmentId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            renderPrescriptions(data.data);
+          } else {
+            document.getElementById("prescriptionsContainer").innerHTML =
+              `<div class="alert alert-danger">${data.message}</div>`;
+          }
+        })
+        .catch(err => {
+          document.getElementById("prescriptionsContainer").innerHTML =
+            `<div class="alert alert-danger">Error fetching data: ${err.message}</div>`;
+        });
+    }
+
+    // Filter dropdown click handler
+    document.querySelectorAll(".filter-option").forEach(item => {
+      item.addEventListener("click", e => {
+        e.preventDefault();
+        const status = e.target.dataset.status;
+        document.getElementById("filterButton").textContent = `Filter by ${e.target.textContent}`;
+        const params = new URLSearchParams(window.location.search);
+        const appointmentId = params.get("id");
+        if (!appointmentId) {
+          alert("❌ Missing appointment ID. Redirecting back...");
+          setTimeout(() => history.back(), 1000);
+          return;
+        }
+        fetchPrescriptions(status, appointmentId);
+      });
+    });
+
+    // Initial load: check ?status= and ?appointmentId=
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get("status") || "ALL";
+      const appointmentId = params.get("id");
+
+      if (!appointmentId) {
+        alert("❌ Appointment ID is required.");
+        setTimeout(() => history.back(), 1000);
+        return;
+      }
+
+      fetchPrescriptions(status, appointmentId);
+    });
+</script>
+
+<script src="/static/add-prescription.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title = 'DASHBOARD - LIS Admin Portal - FUTO HIS')"></head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+
+        <div class="mb-5" th:insert="fragments :: headerOne(title='NEW LAB TEST REQUISITION')"></div>
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-body p-3">
+                        <h3 class="mb-4">Lab Test Requisition Form</h3>
+                        <form id="requisitionForm">
+                            <!-- Patient RegNo -->
+                            <div class="mb-3">
+                                <label for="regno" class="form-label">Patient Registration Number</label>
+                                <input type="text" class="form-control" id="regno" placeholder="Enter Patient Registration Number" required>
+                                <input type="text" class="form-control" id="orderId" value="" style="display:none;" hidden>
+                                <small id="patientDetails" class="text-muted mt-2"></small>
+                            </div>
+
+                            <!-- Request Format -->
+                            <div class="mb-3">
+                                <label for="requestFormat" class="form-label">Request Format</label>
+                                <select class="form-select" id="requestFormat" required>
+                                    <option value="" selected disabled>Select Request Format</option>
+                                    <option value="physician">Physician</option>
+                                    <option value="direct">Direct Entry</option>
+                                </select>
+                            </div>
+
+                            <!-- Physician Selection (Visible only for Physician format) -->
+                            <div class="mb-3 d-none" id="physicianSelection">
+                                <label for="physician" class="form-label">Select Physician</label>
+                                <select class="form-select" id="physician">
+                                    <option value="" selected disabled>Loading...</option>
+                                </select>
+                            </div>
+
+                            <!-- Test Category -->
+                            <div class="mb-3">
+                                <label for="testCategory" class="form-label">Select Lab Test Category</label>
+                                <select class="form-select" id="testCategory" required>
+                                    <option value="" selected disabled>Loading...</option>
+                                </select>
+                            </div>
+
+                            <!-- Specific Lab Tests -->
+                            <div class="mb-3">
+                                <label for="labTest" class="form-label">Select Lab Test</label>
+                                <select class="form-select" id="labTest" required>
+                                    <option value="" selected disabled>Select a Category First</option>
+                                </select>
+                            </div>
+
+                            <!-- Sample Information -->
+                            <div class="mb-3">
+                                <label for="sampleType" class="form-label">Select Sample Type/ Specimen</label>
+                                <select class="form-select" id="sampleType" required>
+                                    <option value="" selected disabled>Select a Lab Test First</option>
+                                </select>
+                            </div>
+
+                            <!-- Sample Collection Date & Time -->
+                            <div class="mb-3">
+                                <label for="collectionDateTime" class="form-label">Sample Collection Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="collectionDateTime" required>
+                            </div>
+
+                            <!-- Priority Level -->
+                            <div class="mb-3">
+                                <label for="priorityLevel" class="form-label">Priority Level</label>
+                                <select class="form-select" id="priorityLevel" required>
+                                    <option value="" selected disabled>Select Priority Level</option>
+                                    <option value="routine">Routine</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="stat">Stat</option>
+                                </select>
+                            </div>
+
+                            <!-- Clinical Notes -->
+                            <div class="mb-3">
+                                <label for="clinicalNotes" class="form-label">Clinical Notes</label>
+                                <textarea class="form-control" id="clinicalNotes" rows="4" placeholder="Enter any additional details here..."></textarea>
+                            </div>
+
+                            <!-- Submit Button with Loader -->
+                            <button type="submit" class="btn btn-primary" id="submitButton">
+                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="submitLoader"></span>
+                                Submit Requisition
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4" style="display:none;">
+
+            </div>
+
+    <div th:insert="fragments :: footer"></div>
+</div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const regnoInput = document.getElementById("regno");
+        const patientDetails = document.getElementById("patientDetails");
+        const requestFormat = document.getElementById("requestFormat");
+        const physicianSelection = document.getElementById("physicianSelection");
+        const physicianDropdown = document.getElementById("physician");
+        const testCategory = document.getElementById("testCategory");
+        const labTest = document.getElementById("labTest");
+        const sampleType = document.getElementById("sampleType");
+
+
+        // Fetch Patient Details
+        regnoInput.addEventListener("blur", () => {
+            fetch(`/lis/identify-patient?regno=${regnoInput.value}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Patient not found!");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update UI with patient details
+                    patientDetails.innerText = `Patient: ${data.firstName} ${data.surName}`;
+                    patientDetails.classList.remove("text-danger");
+                })
+                .catch(error => {
+                    // Handle errors (e.g., patient not found)
+                    patientDetails.innerText = error.message;
+                    patientDetails.classList.add("text-danger");
+                });
+        });
+
+
+        // Handle Request Format Change
+        requestFormat.addEventListener("change", () => {
+            if (requestFormat.value === "physician") {
+                physicianSelection.classList.remove("d-none");
+                fetch("/lis/get-physicians")
+                    .then(response => response.json())
+                    .then(data => {
+                        physicianDropdown.innerHTML = data.physicians.map(
+                            physician => `<option value="${physician.id}">${physician.name}</option>`
+                        ).join("");
+                    });
+            } else {
+                physicianSelection.classList.add("d-none");
+            }
+        });
+
+        // Fetch Lab Test Categories
+        fetch("/lis/all-categories")
+            .then(response => response.json())
+            .then(data => {
+                testCategory.innerHTML = data.categories.map(
+                    category => `<option value="${category.id}">${category.name}</option>`
+                ).join("");
+            });
+
+        // Fetch Lab Tests Based on Category
+        testCategory.addEventListener("blur", () => {
+            fetch(`/lis/get-lab-tests?categoryId=${testCategory.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    labTest.innerHTML = data.labTests.map(
+                        test => `<option value="${test.id}">${test.name}</option>`
+                    ).join("");
+                });
+        });
+
+        // Fetch Sample Types Based on Lab Test
+        labTest.addEventListener("change", () => {
+            fetch(`/lis/get-samples-for-test?testId=${labTest.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    sampleType.innerHTML = data.samples.map(
+                        sample => `<option value="${sample.id}">${sample.name}</option>`
+                    ).join("");
+                });
+        });
+
+    });
+document.getElementById('requisitionForm').addEventListener('submit', async function (event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+
+    // Add loader
+    submitButton.disabled = true;
+    submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...`;
+
+    try {
+        // Collect form data
+        const payload = {
+            regno: document.getElementById('regno').value.trim(),
+            requestFormat: document.getElementById('requestFormat').value,
+            physician: document.getElementById('physician')?.value || null,
+            orderId: document.getElementById('orderId')?.value || null,
+            testCategory: document.getElementById('testCategory').value,
+            labTest: document.getElementById('labTest').value,
+            sampleType: document.getElementById('sampleType').value,
+            collectionDateTime: document.getElementById('collectionDateTime').value,
+            priorityLevel: document.getElementById('priorityLevel').value,
+            clinicalNotes: document.getElementById('clinicalNotes').value.trim(),
+        };
+
+        // Ensure values are not null or empty
+        console.log('Payload:', payload);
+
+        const response = await fetch('/lis/add-requisition', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+            // Handle success
+            const data = await response.json(); // Ensure `data` is defined
+            const requisitionId = data.id;
+            event.target.reset();
+            patientDetails.innerText = "";
+            alert('Requisition logged successfully!');
+            window.location.href = `/lis/view-requisition?id=${requisitionId}`;
+        } else {
+            // Handle server-side errors
+            const error = await response.text();
+            alert(`Error: ${error}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the requisition.');
+    } finally {
+        // Restore the button state
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+    }
+});
+
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const logId = urlParams.get("log_id");
+
+        if (logId) {
+            try {
+                const response = await fetch(`/lis/fetch-lab-orders`);
+                const labOrders = await response.json();
+
+                // Find the order matching the log_id
+                const order = labOrders.find(order => order.labOrderId == logId);
+
+                if (order) {
+                    const orderDetailsContainer = document.querySelector(".col-lg-4");
+                    const orderIdInput = document.getElementById("orderId");
+
+                    // Ensure the container is visible
+                    orderDetailsContainer.style.display = "block";
+
+                    // Set the hidden input value
+                    orderIdInput.value = order.labOrderId;
+
+                    // Populate the container with order details
+                    orderDetailsContainer.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Lab Order Details</h5>
+                                <p><strong>Order ID:</strong> ${order.labOrderId}</p>
+                                <p><strong>Reg No:</strong> ${order.regNo}</p>
+                                <p><strong>Test Name:</strong> ${order.labTestName}</p>
+                                <p><strong>Category:</strong> ${order.labTestCategory}</p>
+                                <p><strong>Doctor:</strong> ${order.doctorName}</p>
+                                <p><strong>Comments:</strong> ${order.comment}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    console.warn("Lab order not found for the provided log_id.");
+                }
+            } catch (error) {
+                console.error("Error fetching lab order details:", error);
+            }
+        }
+    });
+</script>
+
+
+</body>
+</html>

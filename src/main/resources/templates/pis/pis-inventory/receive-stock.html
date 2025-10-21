@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title='Receive Stock - PIS Inventory')"></head>
+<style>
+    .spinner-border {
+        vertical-align: middle;
+        margin-left: 0.5rem; /* Space between text and loader */
+    }
+</style>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5" th:insert="fragments :: headerOne(title='Inventory Management- PIS')"></div>
+
+            <div class="row align-items-center mb-5 mt-2">
+                <h2 class="my-4 text-center">Receive Stock - Inventory</h2>
+
+                <!-- this card here is the one you need to change -->
+                <div class="card shadow-sm p-4">
+                    <form id="receiveStockForm">
+                        <div class="mb-3">
+                            <label for="drugSelect" class="form-label">Select Drug</label>
+                            <select class="form-select" id="drugSelect" name="drugId" required>
+                                <option value="">-- Select Drug --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="packageSelect" class="form-label">Select Package</label>
+                            <select class="form-select" id="packageSelect" name="packageId" required>
+                                <option value="">-- Select Package --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity (in selected package)</label>
+                            <input type="number" class="form-control" id="quantity" name="quantityOfPackage" min="1" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="batchNumber" class="form-label">Batch Number</label>
+                            <input type="text" class="form-control" id="batchNumber" name="batchNumber" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="manufactureDate" class="form-label">Manufacture Date</label>
+                            <input type="date" class="form-control" id="manufactureDate" name="manufactureDate">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="expiryDate" class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control" id="expiryDate" name="expiryDate" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="unitCost" class="form-label">Unit Cost (per package)</label>
+                            <input type="number" step="0.01" class="form-control" id="unitCost" name="unitCostPerPackage" required>
+                        </div>
+
+                        <div id="receiveStockFeedback" class="mt-3"></div>
+
+                        <button type="submit" class="btn btn-primary" id="submitBtnReceiveStock">
+                            <span id="buttonTextReceiveStock">Submit</span>
+                            <span id="buttonLoaderReceiveStock" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadDrugs() {
+        const res = await fetch('/pis/drugs');
+        const drugs = await res.json();
+        document.getElementById('drugSelect').innerHTML =
+            '<option value="">-- Select Drug --</option>' +
+            drugs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    }
+
+    // When drug is selected, load its packages
+    document.getElementById('drugSelect').addEventListener('change', async function () {
+        const drugId = this.value;
+        if (!drugId) return;
+
+        const res = await fetch(`/pis/drugs/${drugId}/packages`);
+        const packages = await res.json();
+        document.getElementById('packageSelect').innerHTML =
+            '<option value="">-- Select Package --</option>' +
+            packages.map(p => `<option value="${p.id}">${p.packageName} (${p.quantity})</option>`).join('');
+    });
+
+    // Handle submit
+    document.getElementById('receiveStockForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtnReceiveStock');
+        const txt = document.getElementById('buttonTextReceiveStock');
+        const loader = document.getElementById('buttonLoaderReceiveStock');
+        txt.classList.add('d-none'); loader.classList.remove('d-none'); btn.disabled = true;
+
+        try {
+            const formData = new FormData(this);
+            const body = {
+                drugId: parseInt(formData.get('drugId')),
+                packageId: parseInt(formData.get('packageId')),
+                quantityOfPackage: parseInt(formData.get('quantityOfPackage')),
+                batchNumber: formData.get('batchNumber'),
+                manufactureDate: formData.get('manufactureDate') || null,
+                expiryDate: formData.get('expiryDate') || null,
+                unitCostPerPackage: parseFloat(formData.get('unitCostPerPackage'))
+            };
+
+            const response = await fetch('/pis/receive-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const result = await response.json();
+            document.getElementById('receiveStockFeedback').innerHTML =
+                response.ok ? `<div class="alert alert-success">${result.message}</div>`
+                            : `<div class="alert alert-danger">${result.message}</div>`;
+            if (response.ok) this.reset();
+        } catch {
+            document.getElementById('receiveStockFeedback').innerHTML =
+                `<div class="alert alert-danger">Failed to submit. Try again.</div>`;
+        } finally {
+            txt.classList.remove('d-none'); loader.classList.add('d-none'); btn.disabled = false;
+        }
+    });
+
+    loadDrugs();
+</script>
+
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

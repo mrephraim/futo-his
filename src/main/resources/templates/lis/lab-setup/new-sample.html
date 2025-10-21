@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: head(title='Lab Sample Types - Add Sample Type')"></head>
+<style>
+    .spinner-border {
+        vertical-align: middle;
+        margin-left: 0.5rem; /* Space between text and loader */
+    }
+</style>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="row align-items-center mb-5 mt-2">
+                <h2 class="my-4 text-center">Add New Sample Type</h2>
+
+                <!-- Sample Type Form -->
+                <div class="card shadow-sm p-4">
+                    <form id="sampleTypeForm">
+                        <div class="mb-3">
+                            <label for="sampleTypeName" class="form-label">Sample Type Name</label>
+                            <input type="text" class="form-control" id="sampleTypeName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sampleTypeDescription" class="form-label">Sample Type Description</label>
+                            <textarea class="form-control" id="sampleTypeDescription" name="description" rows="3" required></textarea>
+                        </div>
+                        <div id="feedback" class="mt-3"></div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span id="buttonText">Submit</span>
+                            <span id="buttonLoader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('sampleTypeForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        // Button and loader elements
+        const submitBtn = document.getElementById('submitBtn');
+        const buttonText = document.getElementById('buttonText');
+        const buttonLoader = document.getElementById('buttonLoader');
+
+        // Show loader and disable button
+        buttonText.classList.add('d-none');
+        buttonLoader.classList.remove('d-none');
+        submitBtn.disabled = true;
+
+        try {
+            // Prepare data
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description')
+            };
+
+            // AJAX request
+            const response = await fetch('/lis/new-sample-type', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            // Handle success or error feedback
+            const feedback = document.getElementById('feedback');
+            if (response.ok) {
+                feedback.innerHTML = `<div class="alert alert-success">Sample type added successfully!</div>`;
+                this.reset();
+            } else {
+                feedback.innerHTML = `<div class="alert alert-danger">${result.error || 'An error occurred.'}</div>`;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('feedback').innerHTML = `
+                <div class="alert alert-danger">Failed to submit. Please try again.</div>`;
+        } finally {
+            // Restore button state
+            buttonText.classList.remove('d-none');
+            buttonLoader.classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+<div th:insert="fragments :: footer"></div>
+</body>
+</html>

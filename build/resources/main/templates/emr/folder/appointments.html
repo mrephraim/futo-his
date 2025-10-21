@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="fragments :: folderHead(title = 'Dashboard')">
+
+</head>
+<body>
+
+<div th:insert="fragments :: sidebar"></div>
+<div class="content">
+    <div class="container py-4">
+        <div class="container py-4">
+            <h3 class="mb-3">Appointments</h3>
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Doctor ID</th>
+                            <th>Appointment Date</th>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Department</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="appointments-body">
+                        <tr>
+                            <td colspan="7" class="text-center">Loading appointments...</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div th:insert="fragments :: folderFooter"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+     function fetchAppointments() {
+         fetch("/emr/api/appointments")
+             .then(response => response.json())
+             .then(data => {
+                 const tableBody = document.getElementById("appointments-body");
+                 tableBody.innerHTML = ""; // Clear table before adding new data
+
+                 data.forEach(appointment => {
+                     const row = document.createElement("tr");
+                     row.style.cursor = "pointer";
+                     row.onclick = () => {
+                         window.location.href = `/emr/folder/view-appointment?id=${appointment.id}`;
+                     };
+
+                     row.innerHTML = `
+                         <td>${appointment.doctorId}</td>
+                         <td>${appointment.appointmentDate}</td>
+                         <td>${appointment.beginTime} - ${appointment.finishTime}</td>
+                         <td>${appointment.type}</td>
+                         <td>${appointment.department}</td>
+                         <td>
+                             ${appointment.status === 3 ?
+                                 '<button class="btn btn-secondary btn-sm" disabled>Checked</button>':
+                                 '<button class="btn btn-primary btn-sm">Check</button>'}
+                         </td>
+                     `;
+
+                     tableBody.appendChild(row);
+                 });
+             })
+             .catch(error => console.error("Error fetching appointments:", error));
+     }
+
+     // Fetch appointments initially and refresh every 5 seconds
+     fetchAppointments();
+     setInterval(fetchAppointments, 5000);
+ });
+
+</script>
+
+</body>
+</html>
