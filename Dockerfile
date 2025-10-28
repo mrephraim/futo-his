@@ -1,26 +1,34 @@
 # Stage 1: Cache Gradle dependencies
-FROM gradle:latest AS cache
-RUN mkdir -p /home/gradle/cache_home
-ENV GRADLE_USER_HOME=/home/gradle/cache_home
-COPY build.gradle.* gradle.properties /home/gradle/app/
-COPY gradle /home/gradle/app/gradle
+FROM gradle:8.10.2-jdk21 AS cache
 WORKDIR /home/gradle/app
-RUN gradle clean build -i --stacktrace
 
-# Stage 2: Build Application
-FROM gradle:latest AS build
-COPY --from=cache /home/gradle/cache_home /home/gradle/.gradle
-COPY . /usr/src/app/
-WORKDIR /usr/src/app
-COPY --chown=gradle:gradle . /home/gradle/src
+# Copy Gradle build files (but NOT the full source yet)
+COPY build.gradle.kts gradle.properties settings.gradle.kts ./
+COPY gradle ./gradle
+
+# Download dependencies without building the project
+RUN gradle dependencies --no-daemon || return 0
+
+# Stage 2: Build the application
+FROM gradle:8.10.2-jdk21 AS build
 WORKDIR /home/gradle/src
-# Build the fat JAR, Gradle also supports shadow
-# and boot JAR by default.
-RUN gradle buildFatJar --no-daemon
 
-# Stage 3: Create the Runtime Image
-FROM openjdk:21 AS runtime
+# Copy cached Gradle data from previous stage
+COPY --from=cache /home/gradle/.gradle /home/gradle/.gradle
+
+# Copy all source code
+COPY . .
+
+# Build the fat JAR (this works with either Shadow or Ktor plugin)
+RUN gradle shadowJar --no-daemon
+
+# Stage 3: Runtime image
+FROM openjdk:21-jdk-slim AS runtime
+WORKDIR /app
 EXPOSE 8080
-RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/ng.futohis.futo-his.jar
-ENTRYPOINT ["java","-jar","/app/ng.futohis.futo-his.jar"]
+
+# Copy built JAR
+COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
+
+# Run your app
+ENTRYPOINT ["java", "-jar", "app.jar"]
