@@ -6,11 +6,12 @@ import org.jetbrains.exposed.sql.Database
 
 
 fun Application.configureDatabases() {
+
     Database.connect(
-        url = "jdbc:postgresql://localhost:5432/futo-his",
+        url = "jdbc:postgresql://dpg-cqg4s78gph6c73ai1mlg-a.oregon-postgres.render.com:5432/futo_his_pgdb",
         driver = "org.postgresql.Driver",
-        user = "postgres",
-        password = "Ephraim"
+        user = "futo_his_pgdb_user",
+        password = "futo_his_pgdb_user"
     )
 
     //setup database tables
