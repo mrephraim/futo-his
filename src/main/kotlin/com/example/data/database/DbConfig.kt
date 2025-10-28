@@ -11,7 +11,7 @@ fun Application.configureDatabases() {
         url = "jdbc:postgresql://dpg-d40ithbipnbc73b36af0-a:5432/futo_his_pgdb",
         driver = "org.postgresql.Driver",
         user = "futo_his_pgdb_user",
-        password = "futo_his_pgdb_user"
+        password = "4cgdV1K6l7ls9eEkl63N0YR7RPQj507G"
     )
 
     //setup database tables
